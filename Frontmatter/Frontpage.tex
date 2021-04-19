@@ -1,0 +1,28 @@
+\title{\thesistitle} 
+\author{\thesisauthor} 
+\date{\thedate} 
+
+\begin{titlepage}
+
+%\newgeometry{left=11mm,right=11mm,top=50mm,bottom=0pt}
+\pagecolor{frontbackcolor}
+\color{\frontpagetextcolour}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{empty} 
+\newgeometry{left=2cm, right=2cm}
+\pagenumbering{roman} 
+\vspace*{\fill}\noindent{\rule{\linewidth}{1mm}\\[4ex]
+{\Huge\frontfont \thesistitle}\\[2ex]
+{\huge\frontfont \thesisauthor, \studentnumber}\\[2ex]
+\noindent\rule{\linewidth}{1mm}\\[4ex]
+\noindent{\Large\frontfont \documenttype\ in \department\\[1ex] 
+\departmentdescriber\\[1ex] 
+\today \\[1ex] Advisor: \thesisadvisor\\[15ex]}\\[\fill]}
+\epsfig{file=Pictures/Logos/au_cs_white.eps}
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\end{titlepage}

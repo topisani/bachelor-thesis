@@ -1,0 +1,31 @@
+\chapter{Expression Templates}
+
+\todo{A Basic introduction to expression templates as an AST encoded in an object, where the structure of the expression is represented by recursive composition of types}
+\\
+\todo{Introduce Bachelet/Yon (\url{https://hal.archives-ouvertes.fr/hal-01351060/document}) as a reference point for this section}
+
+\section{Expression Templates with Concepts}
+\todo{Introduce my design of expression templates}\\
+\todo{Consider: Compare to basic design that doesnt have the AST / Visitor separation}
+
+\section{Fixing operands}
+\todo{Consider glossing over this section. While it is important to the implementation, it is not very important to the report, and I can probably refer directly to Bachelet/Yon, since the implementation will be very similar}
+
+Nope, the implementation is not similar. It is done a lot simpler, by just using a \cpp{fixed_t} type trait
+
+\section{Operator Overloading}
+\todo{Basics of how operator overloading is used}\\
+\todo{Mention of boxing literals, as well as marking types as valid operands}
+
+\section{Evaluating with the Visitor Pattern}
+\todo{How is this different from Bachelet/Yon?}\\
+\todo{Plan: Based more on function overloading since C++20 concepts allows those to be more powerful, and this is an easier way to add visitor specializations}
+
+\section{Type erasure}
+\todo{Motivation? In practice this is important, but could it be left out of the report completely or partially?}
+\todo{How is this different from Bachelet/Yon?}\\
+\todo{Plan: \cpp{DynExpr<VISITORS..., TYPE>}, where \cpp{TYPE} might represent the full signature of the visitor, just the return type of the expression or something}
+
+\section{(Potential) Usage}
+\todo{Maybe not as a section like this, either move it out into the next chapter, or splice it into the previous sections where applicable} \\
+\todo{The visitor based approach allows for other types of evaluations, like debug printing, or even a faust-style box diagram renderer. It will (probably) also be the basis of how we do optimizations, by adding platform-specific optimization passes, though this could also be done by specializing the evalution function templates.}

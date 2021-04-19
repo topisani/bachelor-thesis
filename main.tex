@@ -1,0 +1,60 @@
+\documentclass[a4paper,11pt]{report} %twoside, openright
+\input{Setup/Statics.tex}
+\input{Setup/Preamble.tex}
+\input{Setup/Settings.tex}
+
+
+
+\begin{document}
+
+\iffalse
+\pagenumbering{roman}
+\input{Frontmatter/Frontpage.tex}
+\pagecolor{white}
+%\newgeometry{top=2.81cm, bottom=2.75cm, outer=2.5cm, inner=3.5cm}
+\pagestyle{empty}
+\cleardoublepage 
+\input{Frontmatter/Copyright.tex}
+\clearpage 
+\pagestyle{main}
+%\input{Frontmatter/Approval.tex}
+%\clearpage 
+\input{Frontmatter/Abstract.tex}
+\clearpage 
+\input{Frontmatter/Acknowledgements.tex}
+\cleardoublepage 
+\tableofcontents
+\cleardoublepage 
+\fi
+
+\newcommand{\includechapter}[1]{
+    \input{Chapters/#1.tex}
+    \\
+    \\
+    \iffalse
+    \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
+    \fi
+    \cleardoublepage
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{arabic}
+
+\includechapter{01_Introduction}
+\includechapter{02_Review}
+\includechapter{03_Expression_Templates}
+\includechapter{04_Basic_Blocks}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\printbibliography[heading=bibintoc,title={Bibliography}]
+
+\iffalse
+\cleardoublepage 
+\appendix
+\input{Backmatter/Appendix.tex}
+\cleartoleftpage
+\input{Backmatter/Backpage.tex}
+\fi
+
+\end{document}
