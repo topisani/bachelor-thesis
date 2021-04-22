@@ -3,11 +3,11 @@
 \input{Setup/Preamble.tex}
 \input{Setup/Settings.tex}
 
-
+\nonstopmode
 
 \begin{document}
 
-\iffalse
+% \iffalse
 \pagenumbering{roman}
 \input{Frontmatter/Frontpage.tex}
 \pagecolor{white}
@@ -25,15 +25,15 @@
 \cleardoublepage 
 \tableofcontents
 \cleardoublepage 
-\fi
+% \fi
 
 \newcommand{\includechapter}[1]{
     \input{Chapters/#1.tex}
     \\
     \\
-    \iffalse
+    % \iffalse
     \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
-    \fi
+    % \fi
     \cleardoublepage
 }
 
@@ -49,12 +49,12 @@
 
 \printbibliography[heading=bibintoc,title={Bibliography}]
 
-\iffalse
+% \iffalse
 \cleardoublepage 
 \appendix
 \input{Backmatter/Appendix.tex}
 \cleartoleftpage
 \input{Backmatter/Backpage.tex}
-\fi
+% \fi
 
 \end{document}

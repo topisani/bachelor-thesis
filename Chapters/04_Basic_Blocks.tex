@@ -10,71 +10,121 @@
 \newcommand{\Ins}{\ensuremath{\textbf{ins}}}
 \newcommand{\Outs}{\ensuremath{\textbf{outs}}}
 
-In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlaray2002} Orlarey et al introduce a series of five basic block diagram operations. In \autocite{orlarey2004} they expand with two extra compositional operations
+In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al
+introduce a series of five basic block diagram operations. In \autocite{orlarey2004} they expand with two extra
+compositional operations
 
-Given a set $\mathbb{B}$ of primitive domain-specific blocks, a block diagram $d \in \mathbb{D}$ are described as terms of the language $\mathbb{D}$
+Given a set $\mathbb{B}$ of primitive domain-specific blocks, a block diagram $d \in \mathbb{D}$ is described as terms
+of the language $\mathbb{D}$
 
 \begin{align*}
-    d\in \mathbb{D} &::= b \in \mathbb{B} \\
-    &|\; \Ident \\
-    &|\; \Cut \\
-    &|\; \Sequential(d_1, d_2) \\
-    &|\; \Parallel(d_1, d_2) \\
-    &|\; \Recursive(d_1, d_2) \\
-    &|\; \Split(d_1, d_2) \\
-    &|\; \Merge(d_1, d_2) \\
+  d\in \mathbb{D} & ::= b \in \mathbb{B}      \\
+                  & |\; \Ident                \\
+                  & |\; \Cut                  \\
+                  & |\; \Sequential(d_1, d_2) \\
+                  & |\; \Parallel(d_1, d_2)   \\
+                  & |\; \Recursive(d_1, d_2)  \\
+                  & |\; \Split(d_1, d_2)      \\
+                  & |\; \Merge(d_1, d_2)      \\
 \end{align*}
 
-Faust (and \autocite{orlaray2002}) uses single-character operator syntax for these operations, but since the same syntax cannot be achieved exactly in C++, I will be referring to them by their names as prefix functions.
+Faust (and \autocite{orlarey2002}) uses single-character operator syntax for these operations, but since the same
+syntax cannot be achieved
+exactly in C++, I will be referring to them by their names as prefix functions.
 
-Any element $d \in \mathbb{D}$ has a number of input ports $\Ins(d)$, and $\Outs(d)$. These values must be predefined for the primitive blocks $\mathbb{B} \cup \{\Ident, \Cut\}$, and can be computed for the block composition operations, based only on the $\Ins$ and $\Outs$ of the operands.
+Any element $d \in \mathbb{D}$ has a number of input ports $\Ins(d)$, and $\Outs(d)$.
+These
+values must be predefined for the primitive blocks $\mathbb{B} \cup \{\Ident, \Cut\}$, and
+can be computed for the block composition operations, based only on the $\Ins$ and
+$\Outs$
+of the operands.
 
 \section{Basic block operations}
 
 \begin{table}[]
-    \centering
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-    $d$                     & Faust Syntax      & EDA Syntax        & $\Ins(d)$                 & $\Outs(d)$                \\
-\hline\hline
-    \Ident                  & \cpp{_}           & \cpp{_}           & 1                         & 1                         \\
-    \Cut                    & \cpp{!}           & \cpp{cut}         & 1                         & 0                         \\
-    $\Sequential(d_1, d_2)$ & \cpp{d1 : d2}     & \cpp{d1 | d2}     & $\Ins(d_1)$               & $\Outs(d_2)$              \\
-    $\Parallel(d_1, d_2)$   & \cpp{d1 , d2}     & \cpp{d1 , d2}     & $\Ins(d_1) + \Ins(d_2)$   & $\Outs(d_1) + \Outs(d_2)$ \\
-    $\Recursive(d_1, d_2)$  & \cpp{d1 ~ d2}     & \cpp{d1 \% d2}    & $\Ins(d_1) - \Outs(d_2)$  & $\Outs(d_1)$              \\
-    $\Split(d_1, d_2)$      & \cpp{d1 <: d2}    & \cpp{d1 << d2}    & $\Ins(d_1)$               & $\Outs(d_2)$              \\
-    $\Merge(d_1, d_2)$      & \cpp{d1 :> d2}    & \cpp{d1 >> d2}    & $\Ins(d_1)$               & $\Outs(d_2)$              \\
-\hline
-\end{tabular}
-    \caption{Basic block diagram compontents and their properties and syntax}
-    \label{tab:blocks}
+  \centering
+  \begin{tabular}{|l|c|c|c|c|}
+    \hline
+    $d$                     & Faust Syntax   & EDA Syntax     & $\Ins(d)$                & $\Outs(d)$                \\
+    \hline\hline
+    \Ident                  & \cpp{_}        & \cpp{_}        & 1                        & 1                         \\
+    \Cut                    & \cpp{!}        & \cpp{cut}      & 1                        & 0                         \\
+    $\Sequential(d_1, d_2)$ & \cpp{d1 : d2}  & \cpp{d1 | d2}  & $\Ins(d_1)$              & $\Outs(d_2)$              \\
+    $\Parallel(d_1, d_2)$   & \cpp{d1 , d2}  & \cpp{d1 , d2}  & $\Ins(d_1) + \Ins(d_2)$  & $\Outs(d_1) + \Outs(d_2)$ \\
+    $\Recursive(d_1, d_2)$  & \cpp{d1 ~ d2}  & \cpp{d1 \% d2} & $\Ins(d_1) - \Outs(d_2)$ & $\Outs(d_1)$              \\
+    $\Split(d_1, d_2)$      & \cpp{d1 <: d2} & \cpp{d1 << d2} & $\Ins(d_1)$              & $\Outs(d_2)$              \\
+    $\Merge(d_1, d_2)$      & \cpp{d1 :> d2} & \cpp{d1 >> d2} & $\Ins(d_1)$              & $\Outs(d_2)$              \\
+    \hline
+  \end{tabular}
+  \caption{Basic block diagram compontents and their properties and syntax}
+  \label{tab:blocks}
 \end{table}
 
-\begin{description}
-\item[\Ident] Take one input signal and outputs that same input signal.
-\item[\Cut] Take one input signal and output nothing.
-\item[$\Sequential(d_1, d_2)$] Pass the output of $d_1$ into $d_2$. Requires $\Outs(d_1) = \Ins(d_2)$.
-\item[$\Parallel(d_1, d_2)$] Given $\Ins(d_1) + \Ins(d_2)$ input signals, pass the first $\Ins(d_1)$ signals to $d_1$, and the remaining $\Ins(d_2)$ signals to $d_2$. Output a concatenation of the output signals from $d_1$ and $d_2$.  
-\item[$\Recursive(d_1, d_2)$]
-\item[$\Split(d_1, d_2)$]
-\item[$\Merge(d_1, d_2)$]
-\end{description}
+\begin{figure}
+  \centering
+  \label{fig:block_ident}
+  \label{fig:block_cut}
+  \includestandalone[]{Pictures/block_ident}
+  \includestandalone[]{Pictures/block_cut}
+  \caption{The $\Cut$ and $\Ident$ block primitives}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \label{fig:block_seq}
+  \includestandalone[]{Pictures/block_seq}
+  \caption{The $\Sequential$ block composition}
+  % \caption{$\Sequential(d_1, d_2)$ block: Pass the output of $d_1$ into $d_2$. Requires $\Outs(d_1) = \Ins(d_2)$.}
+\end{figure}
+
+\begin{figure}
+  \centering
+\end{figure}
+
+\begin{figure}
+  \centering
+  \label{fig:block_par}
+  \label{fig:block_rec}
+  \includestandalone[]{Pictures/block_par}
+  \includestandalone[]{Pictures/block_rec}
+  \caption{The $\Parallel$ and $\Recursive$ block compositions}
+  % \caption{$\Parallel(d_1, d_2)$ block: Given $\Ins(d_1) + \Ins(d_2)$ input signals, pass the first $\Ins(d_1)$ signals
+  %   to $d_1$, and the remaining $\Ins(d_2)$ signals to $d_2$. Output a concatenation of the output signals from $d_1$
+  %   and
+  %   $d_2$.}
+\end{figure}
+
+\begin{figure}
+  \label{fig:block_split}
+  \label{fig:block_merge}
+  \centering
+  \includestandalone[]{Pictures/block_split}
+  \includestandalone[]{Pictures/block_merge}
+  \caption{The $\Split$ and $\Merge$ block compositions}
+  % \caption{$\Split(d_1, d_2)$ block:}
+\end{figure}
 
 \section{C++ Implementation}
 
-When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented for the AST, such as a basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a visual representation of the AST, like fausts block diagram generator.
+When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to separate building
+an AST from evaluating it. This has the advantage that multiple visitors can be implemented for the AST, such as a
+basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a visual representation of the AST,
+like fausts block diagram generator.
 
-The AST is represented by nodes that satisfy the concept \concept{ABlock}, which just requires a block \cpp{T} to inherit from \cpp{BlockBase<T, T::in_channels, T::out_channels>}. \cpp{BlockBase} is a CRTP\footnote{Curriously Recurring Template Pattern, see \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}} base class, and provides \cpp{T::in_channels}, \cpp{T::out_channels}, and the function call operator overload required for currying.
+The AST is represented by nodes that satisfy the concept \concept{ABlock}, which just requires a block
+\cpp{T} to inherit from \cpp{BlockBase<T, T::in_channels, T::out_channels>}. \cpp{BlockBase} is a CRTP
+\footnote{Curriously Recurring Template Pattern, see
+  \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}}
+base class, and provides \cpp{T::in_channels}, \cpp{T::out_channels}, and the function call operator overload
+required for currying.
 
 \subsection{\cpp{BlockBase} and \cpp{ABlock}}
 \subsection{Literals}
 \subsection{Currying}
 \subsection{Operator overloads and shorthand syntax}
 
-
 \subsection{\cpp{evaluator}}
 For simplicity, I assume \cpp{float} for all signals.
 \subsection{\cpp{Frame}}
-
 
 \todo{Implement example with these blocks}
