@@ -441,7 +441,7 @@ modifyLineBreaks:
     oneSentencePerLine:
         manipulateSentences: 0     
         removeSentenceLineBreaks: 1
-        textWrapSentences: 0
+        textWrapSentences: 1
         sentenceIndent: ""
         sentencesFollow:
             par: 1
@@ -463,9 +463,9 @@ modifyLineBreaks:
             questionMark: 1
             other: 0
     textWrapOptions:
-        columns: 120
+        columns: 110
         separator: ""
-        perCodeBlockBasis: 0
+        perCodeBlockBasis: 1
         all:
             except: 
               - quotation
@@ -481,7 +481,10 @@ modifyLineBreaks:
         filecontents: 0
         masterDocument: 1
     removeParagraphLineBreaks:
-        all: 0
+        all: 
+            except: 
+              - quotation
+              - tabular
         beforeTextWrap: 1
         alignAtAmpersandTakesPriority: 1
         environments: 

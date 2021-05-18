@@ -1,4 +1,4 @@
-\chapter{Algebra of Blocks}
+\chapter{Block Diagrams}
 
 \newcommand{\Ident}{\ensuremath{\textrm{ident}}}
 \newcommand{\Cut}{\ensuremath{\textrm{cut}}}
@@ -9,37 +9,51 @@
 \newcommand{\Merge}{\ensuremath{\textrm{merge}}}
 \newcommand{\Ins}{\ensuremath{\textbf{ins}}}
 \newcommand{\Outs}{\ensuremath{\textbf{outs}}}
+\newcommand{\Sig}{\ensuremath{\mathbb{S}}}
 
-In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al
-introduce a series of five basic block diagram operations. In \autocite{orlarey2004} they expand with two extra
-compositional operations
+\todo{Introduce block diagrams}
 
-Given a set $\mathbb{B}$ of primitive domain-specific blocks, a block diagram $d \in \mathbb{D}$ is described as terms
-of the language $\mathbb{D}$
+\section{Algebra of Blocks}
+
+In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
+basic block diagram operations. In \autocite{orlarey2004} they expand with two extra compositional
+operations, split and merge. The following section will give a short introduction to this algebra of blocks,
+and then go into details on how I implemented them in C++.
+
+A block is a computational unit, which takes a certain number of input signals, and returns a number of
+output signals. They model impure functions of the form $\mathbb{S}^n\rightarrow \mathbb{S}^m$, that may have
+\emph{memory}, i.e. depend on input from previous iterations. Signals are continuous streams of
+data at a fixed rate, which for the scope of this project is limited to a single type,
+\cpp{float}. 32-bit floating point numbers are a fairly common datatype for DSP operations,
+although work is also being done with fixed-point numbers.\todo{cite}
+
+Given a set $\mathbb{B}$ of primitive domain-specific blocks, we describe a block diagram
+$d \in \mathbb{D}$ as terms of the language $\mathbb{D}$
 
 \begin{align*}
-  d\in \mathbb{D} & ::= b \in \mathbb{B}      \\
-                  & |\; \Ident                \\
-                  & |\; \Cut                  \\
-                  & |\; \Sequential(d_1, d_2) \\
-                  & |\; \Parallel(d_1, d_2)   \\
-                  & |\; \Recursive(d_1, d_2)  \\
-                  & |\; \Split(d_1, d_2)      \\
-                  & |\; \Merge(d_1, d_2)      \\
+  d, d_1, d_2 \in \mathbb{D} & ::= b \in \mathbb{B}      \\
+                             & |\; \Ident                \\
+                             & |\; \Cut                  \\
+                             & |\; \Sequential(d_1, d_2) \\
+                             & |\; \Parallel(d_1, d_2)   \\
+                             & |\; \Recursive(d_1, d_2)  \\
+                             & |\; \Split(d_1, d_2)      \\
+                             & |\; \Merge(d_1, d_2)      \\
 \end{align*}
 
-Faust (and \autocite{orlarey2002}) uses single-character operator syntax for these operations, but since the same
-syntax cannot be achieved
-exactly in C++, I will be referring to them by their names as prefix functions.
+Faust (and \autocite{orlarey2002}) uses single-character operator syntax for these operations, but since the
+same syntax cannot be achieved exactly in C++, I will be referring to them by their names as prefix
+functions.
 
-Any element $d \in \mathbb{D}$ has a number of input ports $\Ins(d)$, and $\Outs(d)$.
-These
-values must be predefined for the primitive blocks $\mathbb{B} \cup \{\Ident, \Cut\}$, and
+Any element $d \in \mathbb{D}$ has a number of input ports $\Ins(d)$, and
+$\Outs(d)$. These values must be predefined for the primitive blocks $\mathbb{B} \cup \{\Ident, \Cut\}$, and
 can be computed for the block composition operations, based only on the $\Ins$ and
-$\Outs$
-of the operands.
+$\Outs$ of the operands.
 
-\section{Basic block operations}
+\subsection{Basic block operations}
+Each of these seven block operations is described in detail by the FAUST authors in \autocite{orlarey2002}
+and \autocite{orlarey2004}, so here I will only give a brief introduction to each one, along with an example
+illustration, and
 
 \begin{table}[]
   \centering
@@ -60,71 +74,218 @@ of the operands.
   \label{tab:blocks}
 \end{table}
 
-\begin{figure}
-  \centering
-  \label{fig:block_ident}
-  \label{fig:block_cut}
-  \includestandalone[]{Pictures/block_ident}
-  \includestandalone[]{Pictures/block_cut}
-  \caption{The $\Cut$ and $\Ident$ block primitives}
-\end{figure}
+\subsubsection{Identity}
+The $\Ident$ block is the simplest block - it simply takes one input signal, and outputs that
+same signal untouched.
 
-\begin{figure}
-  \centering
-  \label{fig:block_seq}
-  \includestandalone[]{Pictures/block_seq}
-  \caption{The $\Sequential$ block composition}
-  % \caption{$\Sequential(d_1, d_2)$ block: Pass the output of $d_1$ into $d_2$. Requires $\Outs(d_1) = \Ins(d_2)$.}
-\end{figure}
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{}
+    \UnaryInfC{$\Ident: \Sig \rightarrow \Sig$}
+  \end{prooftree}
+  \begin{align*}
+    \Ident(x) & = x
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_ident}
+    \includestandalone[]{Pictures/block_ident}
+  \end{figure}
+\end{minipage}
 
-\begin{figure}
-  \centering
-\end{figure}
+\subsubsection{Cut}
+The $\Cut$ block takes one input signal and outputs nothing. It can be very useful for
+discarding signals when composing blocks.
 
-\begin{figure}
-  \centering
-  \label{fig:block_par}
-  \label{fig:block_rec}
-  \includestandalone[]{Pictures/block_par}
-  \includestandalone[]{Pictures/block_rec}
-  \caption{The $\Parallel$ and $\Recursive$ block compositions}
-  % \caption{$\Parallel(d_1, d_2)$ block: Given $\Ins(d_1) + \Ins(d_2)$ input signals, pass the first $\Ins(d_1)$ signals
-  %   to $d_1$, and the remaining $\Ins(d_2)$ signals to $d_2$. Output a concatenation of the output signals from $d_1$
-  %   and
-  %   $d_2$.}
-\end{figure}
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{}
+    \UnaryInfC{$\Cut: \Sig \rightarrow \emptyset$}
+  \end{prooftree}
+  \begin{align*}
+    \Cut(x) & = ()
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_cut}
+    \includestandalone[]{Pictures/block_cut}
+  \end{figure}
+\end{minipage}
 
-\begin{figure}
-  \label{fig:block_split}
-  \label{fig:block_merge}
-  \centering
-  \includestandalone[]{Pictures/block_split}
-  \includestandalone[]{Pictures/block_merge}
-  \caption{The $\Split$ and $\Merge$ block compositions}
-  % \caption{$\Split(d_1, d_2)$ block:}
-\end{figure}
+\subsubsection{Sequential block composition}
+The simplest composition of two blocks is passing the outputs of one block to the inputs of another in
+sequence. It requires the number of outputs of the first block to equal the number of inputs on the second.
+Faust has defined semantics for when this is not the case as well, but since those cases can all be covered
+by combinations of sequential and parallel compositions, they have been left out here for simplicity.
+
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^p$}
+    \AxiomC{$d_2 : \Sig^{p} \rightarrow \Sig^m$}
+    \BinaryInfC{$\Sequential(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+  \end{prooftree}
+  \begin{align*}
+    \Sequential(d_1, d_2)(\mathbf{x})    ={} & d_2(d_1(\mathbf{x}))
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_seq}
+    \includestandalone[]{Pictures/block_seq}
+  \end{figure}
+\end{minipage}
+
+\subsubsection{Parallel block composition}
+The parallel composition of two blocks can be intuitively seen as a concatenation of their input and output
+signals, resulting in a block where the two components are evaluated separately on their own segments of the
+input.
+
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{$d_1 : \Sig^{n_1} \rightarrow \Sig^{m_1}$}
+    \AxiomC{$d_2 : \Sig^{n_2} \rightarrow \Sig^{m_2}$}
+    \BinaryInfC{$\Parallel(d_1, d_2) : \Sig^{n_1 + n_2} \rightarrow \Sig^{m_1 + m_2}$}
+  \end{prooftree}
+  \begin{align*}
+    \Parallel(d_1, d_2)(\mathbf{x})            ={} & (d_1(x_1, \dots, x_{n_1}),              \\
+                                                   & d_2(x_{n_1 + 1}, \dots, x_{n_1 + n_2})) \\
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_par}
+    \includestandalone[]{Pictures/block_par}
+  \end{figure}
+\end{minipage}
+
+\subsubsection{Recursive block composition}
+The recursive block composition is the most complex. Its purpose is to create cycles in the block diagram, by
+allowing a block to access the output it generated in the previous iteration. The outputs of
+$d_1$ are connected to the corresponding inputs of $d_2$, and the outputs
+of $d_2$ are connected to the corresponding inputs of $d_1$. The inputs to
+the composition are the remaining inputs to $d_1$, and the outputs are all outputs of
+$d_1$.
+
+Since the recursion requires a cycle, the output from $d_1$ that is passed to
+$d_2$ is delayed by one sample, i.e. by one iteration. On the illustrations, this is denoted
+by a small square on the connection.
+
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{$d_1 : \Sig^{n_1} \rightarrow \Sig^{m_1}$}
+    \AxiomC{$d_2 : \Sig^{n_2} \rightarrow \Sig^{m_2}$}
+    \AxiomC{$m_2 \leq n_1$}
+    \AxiomC{$n_2 \leq m_1$}
+    \QuaternaryInfC{$\Recursive(d_1, d_2) : \Sig^{n_1 - m_2} \rightarrow \Sig^{m_1}$}
+  \end{prooftree}
+  \begin{align*}
+    \Recursive(d_1, d_2)(\mathbf{x}) ={} & d_1(d_2(x'_1, \dots, x'_{n_2})_1, \dots d_2(x'_1, \dots, x'_{n_2})_{m_2}, ) \\
+  \end{align*}
+  \todo{what would be the best notation for these?}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_rec}
+    \includestandalone[]{Pictures/block_rec}
+  \end{figure}
+\end{minipage}
+
+\subsubsection{Split block composition}
+The split composition is used to sequentially compose blocks where the first one has fewer outputs than the
+second has inputs. The output signals are connected by repeating the entire output tuple the apropriate
+number of times, and this number is required to be an integer. This means $\Ins(d_2)$ must be an
+exact multiple of $\Outs(d_1)$. \newcommand{\Mod}{\mathrm{\ mod\ }}
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^p$}
+    \AxiomC{$d_2 : \Sig^{p * k} \rightarrow \Sig^m$}
+    \AxiomC{$k \in \mathbb{N}$}
+    \TrinaryInfC{$\Split(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+  \end{prooftree}
+  \begin{align*}
+    \Split(d_1, d_2)(\mathbf{x})                ={} &
+    \begin{aligned}[t]
+      d_2( & d_1(\mathbf{x})_{1 \Mod m_1}, \dots, \\
+           & d_1(\mathbf{x})_{n_2\Mod m_1})
+    \end{aligned}
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_split}
+    \includestandalone[]{Pictures/block_split}
+  \end{figure}
+\end{minipage}
+
+Note that $\Split(d_1, d_2)$ is equal to $\Sequential(d_1, d_2)$ when $k = 1$
+
+\subsubsection{Merge block composition}
+
+Merge composition is the inverse operation of split composition, i.e. it is used to sequentially compose two
+blocks where the first one has more outputs than the second one. It places similar restrictions on
+$d_1$ and $d_2$ as split composition, i.e. it requires
+$\Outs(d_1) = \Ins(d_2) * k$, where $k$ is an integer.
+
+When multiple outputs from $d_1$ are connected to a single input on $d_2$,
+the signals are summed. Like split composition, $\Merge(d_1, d_2)$ is also equivalent
+$\Sequential(d_1, d_2)$ when $k = 1$.
+
+\begin{minipage}{0.5\linewidth}
+  \begin{prooftree}
+    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^{p*k}$}
+    \AxiomC{$d_2 : \Sig^{p} \rightarrow \Sig^m$}
+    \AxiomC{$k \in \mathbb{N}$}
+    \TrinaryInfC{$\Split(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+  \end{prooftree}
+  \begin{align*}
+    \Merge(d_1, d_2)(\mathbf{x})                ={} &
+    \begin{aligned}[t]
+      d_2\Biggl( & \left(\sum^{{m_1}/{n_2} - 1}_{i=0}d_1(\mathbf{x})_{i \cdot n_2 + 1}\right), \dots,    \\
+                 & \left(\sum^{{m_1}/{n_2} - 1}_{i=0}d_1(\mathbf{x})_{i \cdot n_2 + n_2}\right)  \Biggr)
+    \end{aligned}
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_merge}
+    \includestandalone[]{Pictures/block_merge}
+  \end{figure}
+\end{minipage}
+
+\subsection{Domain Specific Blocks}
+
+\subsubsection{Arithmetic}
+\subsubsection{Memory}
+\subsubsection{Delay}
+\subsubsection{Ref}
+\subsubsection{Ref}
 
 \section{C++ Implementation}
 
-When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to separate building
-an AST from evaluating it. This has the advantage that multiple visitors can be implemented for the AST, such as a
-basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a visual representation of the AST,
-like fausts block diagram generator.
+When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to
+separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented
+for the AST, such as a basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a
+visual representation of the AST, like fausts block diagram generator.
 
 The AST is represented by nodes that satisfy the concept \concept{ABlock}, which just requires a block
 \cpp{T} to inherit from \cpp{BlockBase<T, T::in_channels, T::out_channels>}. \cpp{BlockBase} is a CRTP
-\footnote{Curriously Recurring Template Pattern, see
-  \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}}
-base class, and provides \cpp{T::in_channels}, \cpp{T::out_channels}, and the function call operator overload
-required for currying.
+\footnote{Curriously Recurring Template Pattern, see \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}} base class, and provides \cpp{T::in_channels}, \cpp{T::out_channels}, and the
+function call operator overload required for currying.
 
 \subsection{\cpp{BlockBase} and \cpp{ABlock}}
 \subsection{Literals}
 \subsection{Currying}
+\subsection{Repeat}
 \subsection{Operator overloads and shorthand syntax}
 
 \subsection{\cpp{evaluator}}
-For simplicity, I assume \cpp{float} for all signals.
-\subsection{\cpp{Frame}}
-
-\todo{Implement example with these blocks}
+For simplicity, I assume \cpp{float} for all signals. \subsection{\cpp{Frame}}

@@ -2,7 +2,7 @@
 \usepackage[utf8]{inputenc}
 %\usepackage{fontspec}       % Package for custom fonts
 %\usepackage{a4}
-\usepackage[]{geometry}     % Package for changing page margins (before fancyhdr) 
+\usepackage[left=2cm,right=2cm,top=3cm,bottom=3cm]{geometry}     % Package for changing page margins (before fancyhdr) 
 \usepackage{fancyhdr}       % Package to change header and footer
 \usepackage{parskip}        % Package to tweak paragraph skipping (instead of indents a small skip is added after every paragraph)
 \usepackage{tikz}           % Package for drawing
@@ -38,4 +38,17 @@
 \usepackage[useregional]{datetime2}
 \usepackage{verbatim}
 \usepackage{standalone}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage{bussproofs}
+\usepackage[outline]{contour}
+\usepackage{pdfrender}
 \DTMlangsetup[en-US]{showdayofmonth=false}
+
+% For tikzplotlib
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\DeclareUnicodeCharacter{2212}{−}
+\usepgfplotslibrary{groupplots,dateplot}
+\usetikzlibrary{patterns,shapes.arrows}
+\pgfplotsset{compat=newest}

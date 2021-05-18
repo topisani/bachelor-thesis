@@ -1,0 +1,148 @@
+\documentclass[tikz]{standalone}
+
+\begin{document}
+% Pattern Info
+
+\usetikzlibrary{patterns}
+\tikzset{
+  pattern size/.store in=\mcSize,
+  pattern size = 5pt,
+  pattern thickness/.store in=\mcThickness,
+  pattern thickness = 0.3pt,
+  pattern radius/.store in=\mcRadius,
+  pattern radius = 1pt,
+  pattern color={rgb, 255:red, 128; green, 128; blue, 128}}
+\makeatletter
+\pgfutil@ifundefined{pgf@pattern@name@cross}{
+  \pgfdeclarepatternformonly[\mcThickness,\mcSize]{cross}
+  {\pgfqpoint{0pt}{0pt}}
+  {\pgfpoint{\mcSize+\mcThickness}{\mcSize+\mcThickness}}
+  {\pgfpoint{\mcSize}{\mcSize}}
+  {
+    \pgfsetcolor{\tikz@pattern@color}
+    \pgfsetlinewidth{\mcThickness}
+    \pgfpathmoveto{\pgfqpoint{0pt}{0pt}}
+    \pgfpathlineto{\pgfpoint{\mcSize+\mcThickness}{\mcSize+\mcThickness}}
+    \pgfusepath{stroke}
+  }}
+\makeatother
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+  %uncomment if require: \path (0,150); %set diagram left start at 0, and has height of 150
+
+  %Rounded Rect [id:dp39231584535365727] 
+
+  \draw  [color={rgb, 255:red, 208; green, 208; blue, 208 }	,draw opacity=1 ][pattern=cross] (279.6,30) .. controls (279.6,24.48) and (284.08,20) .. (289.6,20) -- (429.6,20) .. controls
+  (435.12,20) and (439.6,24.48) .. (439.6,30) -- (439.6,90) .. controls (439.6,95.52) and (435.12,100) ..
+  (429.6,100) -- (289.6,100) .. controls (284.08,100) and (279.6,95.52) .. (279.6,90) -- cycle ;
+  %Rounded Rect [id:dp9134385656128368] 
+
+  \draw  [color={rgb, 255:red, 208; green, 208; blue, 208 }	,draw opacity=1 ][pattern=cross] (40,30) .. controls (40,24.48) and (44.48,20) .. (50,20) -- (190,20) .. controls (195.52,20)
+  and (200,24.48) .. (200,30) -- (200,90) .. controls (200,95.52) and (195.52,100) .. (190,100) -- (50,100) ..
+  controls (44.48,100) and (40,95.52) .. (40,90) -- cycle ; %Rounded Rect [id:dp5778005653412364] 
+
+  \draw  [fill={rgb, 255:red, 255; green, 255; blue, 255 }	,fill opacity=1 ] (135,58) .. controls (135,53.58) and (138.58,50) .. (143,50) -- (177,50) .. controls
+  (181.42,50) and (185,53.58) .. (185,58) -- (185,82) .. controls (185,86.42) and (181.42,90) .. (177,90) --
+  (143,90) .. controls (138.58,90) and (135,86.42) .. (135,82) -- cycle ; %Rounded Rect [id:dp5777766324583338] 
+
+  \draw  [fill={rgb, 255:red, 255; green, 255; blue, 255 }	,fill opacity=1 ] (55,58) .. controls (55,53.58) and (58.58,50) .. (63,50) -- (97,50) .. controls (101.42,50)
+  and (105,53.58) .. (105,58) -- (105,82) .. controls (105,86.42) and (101.42,90) .. (97,90) -- (63,90) ..
+  controls (58.58,90) and (55,86.42) .. (55,82) -- cycle ; %Rounded Rect [id:dp5866596205974353] 
+
+  \draw   (30,20.33) .. controls (30,14.63) and (34.63,10) .. (40.33,10) -- (439.67,10) .. controls
+  (445.37,10) and (450,14.63) .. (450,20.33) -- (450,119.67) .. controls (450,125.37) and (445.37,130) ..
+  (439.67,130) -- (40.33,130) .. controls (34.63,130) and (30,125.37) .. (30,119.67) -- cycle ;
+
+  \draw    (10,75) -- (53,75) ;
+  \draw [shift={(55,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }	][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and%Straight Lines [id:da2569217998604516] 
+  (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+  \draw    (185,65) -- (213,65) ;
+
+  \draw [shift={(215,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }	][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) ..%Straight Lines [id:da5921269955565176] 
+  controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;	\draw    (10,65) -- (53,65) ;  \draw [shift={(55,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) ..
+  controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and%Straight Lines [id:da6487234161519799] 
+  (6.95,1.4) .. (10.93,3.29)   ; \draw    (105,65) -- (133,65) ; \draw [shift={(135,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and
+  (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29) ;%Straight Lines [id:da4030702517640785] 
+
+  \draw    (105,75) -- (133,75) ;
+  \draw [shift={(135,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls
+  (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+  \draw    (185,75) -- (213,75) ;%Straight Lines [id:da8440560219629487] 
+
+  \draw [shift={(215,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4)
+  .. (10.93,3.29)   ;
+  \draw   (215,58) .. controls (215,53.58) and%Straight Lines [id:da9485190262282595] 
+  (218.58,50) .. (223,50) -- (257,50) .. controls (261.42,50) and (265,53.58) .. (265,58) -- (265,82) ..
+  controls (265,86.42) and (261.42,90) .. (257,90) -- (223,90) .. controls%Rounded Rect [id:dp5125631192933939] 
+  (218.58,90) and (215,86.42) .. (215,82) -- cycle ;  \draw  [fill={rgb, 255:red, 255; green, 255; blue, 255 }  ,fill opacity=1 ] (375,58) .. controls (375,53.58) and
+  (378.58,50) .. (383,50) -- (417,50) .. controls (421.42,50) and (425,53.58) .. (425,58) -- (425,82) ..
+  controls (425,86.42) and (421.42,90) .. (417,90) -- (383,90) .. controls%Rounded Rect [id:dp8322155968619902] 
+  (378.58,90) and (375,86.42) .. (375,82) -- cycle ;  \draw  [fill={rgb, 255:red, 255; green, 255; blue, 255 }  ,fill opacity=1 ] (295,58) .. controls (295,53.58) and
+  (298.58,50) .. (303,50) -- (337,50) .. controls (341.42,50) and (345,53.58) .. (345,58) -- (345,82) ..
+  controls (345,86.42) and (341.42,90) .. (337,90) -- (303,90) .. controls%Rounded Rect [id:dp3986403387340287] 
+  (298.58,90) and (295,86.42) .. (295,82) -- cycle ;  \draw    (265,75) -- (293,75) ;  \draw [shift={(295,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) ..
+  controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+  \draw    (265,65) -- (293,65) ;
+  \draw [shift={(295,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and%Straight Lines [id:da14358229551141788] 
+  (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+  \draw    (345,65) -- (373,65) ;
+
+  \draw [shift={(375,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) ..%Straight Lines [id:da7316790788972058] 
+  controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;	\draw    (345,75) -- (373,75) ;  \draw [shift={(375,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) ..
+  controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and%Straight Lines [id:da33952400525932536] 
+  (6.95,1.4) .. (10.93,3.29)   ;
+  \draw    (425,75) -- (468,75) ; \draw [shift={(470,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls
+  (3.31,0.3) and (6.95,1.4) .. (10.93,3.29) ;%Straight Lines [id:da7869421415110118] 
+
+  \draw    (425,65) -- (468,65) ;
+  \draw [shift={(470,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls
+  (3.31,0.3) and (6.95,1.4) .. (10.93,3.29) ;%Straight Lines [id:da6441392188919552] %Straight Lines [id:da14485372411448982] 
+
+  % Text Node
+
+  \draw (240.5,118) node   [align=left] {$\displaystyle Resample\langle N\rangle ( d,F_{i} ,F_{d})$};
+  % Text Node
+
+  \draw (81,71) node   [align=left] {$\displaystyle \uparrow N$};
+  % Text Node
+
+  \draw (161,71) node   [align=left] {$\displaystyle F_{i}$};
+  % Text Node
+
+  \draw (241,71) node   [align=left] {$\displaystyle d$};
+  % Text Node
+
+  \draw (321,71) node   [align=left] {$\displaystyle F_{d}$};
+  % Text Node
+
+  \draw (401,71) node   [align=left] {$\displaystyle \downarrow N$};
+  % Text Node
+
+  \node at (121.5,36) {%
+    \textpdfrender{
+      TextRenderingMode=FillStrokeClip,
+      LineWidth=4pt,
+      FillColor=white,
+      StrokeColor=white,
+      MiterLimit=1
+    }{Interpolation}%
+  };
+  \draw (121.5,36) node   [align=left] {Interpolation};
+  % Text Node
+
+  \node at (362.5,35) {%
+    \textpdfrender{
+      TextRenderingMode=FillStrokeClip,
+      LineWidth=4pt,
+      FillColor=white,
+      StrokeColor=white,
+      MiterLimit=1
+    }{Decimation}%
+  };
+  \draw (362.5,35) node   [align=left] {Decimation};
+
+\end{tikzpicture}
+\end{document}

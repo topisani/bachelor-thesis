@@ -13,28 +13,28 @@
 \pagecolor{white}
 %\newgeometry{top=2.81cm, bottom=2.75cm, outer=2.5cm, inner=3.5cm}
 \pagestyle{empty}
-\cleardoublepage 
+\cleardoublepage
 \input{Frontmatter/Copyright.tex}
-\clearpage 
+\clearpage
 \pagestyle{main}
 %\input{Frontmatter/Approval.tex}
 %\clearpage 
 \input{Frontmatter/Abstract.tex}
-\clearpage 
+\clearpage
 \input{Frontmatter/Acknowledgements.tex}
-\cleardoublepage 
+\cleardoublepage
 \tableofcontents
-\cleardoublepage 
+\cleardoublepage
 % \fi
 
 \newcommand{\includechapter}[1]{
-    \input{Chapters/#1.tex}
-    \\
-    \\
-    % \iffalse
-    \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
-    % \fi
-    \cleardoublepage
+  \input{Chapters/#1.tex}
+  \\
+  \\
+  % \iffalse
+  \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
+  % \fi
+  \cleardoublepage
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -44,13 +44,15 @@
 \includechapter{02_Review}
 \includechapter{03_Expression_Templates}
 \includechapter{04_Basic_Blocks}
+\includechapter{05_Resampling}
+\includechapter{06_Evaluation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibliography[heading=bibintoc,title={Bibliography}]
 
 % \iffalse
-\cleardoublepage 
+\cleardoublepage
 \appendix
 \input{Backmatter/Appendix.tex}
 \cleartoleftpage
