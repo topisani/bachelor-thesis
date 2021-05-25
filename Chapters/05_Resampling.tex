@@ -1,26 +1,153 @@
-\chapter{Resampling}
+\chapter{Multirate DSP Algorithms}
+
+As an example of the advantages of working directly in C++, this chapter explores resampling, and working
+with a signal path that uses multiple sample rates. I Will cover why this can be very important in certain
+classes of DSP algorithms, how the transformations between sample rates is done, and how I have implemented
+it in the EDA library.
 
 \section{Aliasing}
 
-\begin{figure}[H]
+According to the Nyquist-Shannon theorem\autocite{shannon49}, a discrete-time sampled signal can only
+represent frequencies below half of the sample rate, called the Nyquist frequency $f_N$ or
+the Nyquist limit. Intuitively, this is because no change in the waveform can be faster than the time between
+two samples.
+
+The frequencies above the Nyquist limit don't just disappear from the sampled signal though, but will instead
+be mirrored back and fourth between the Nyquist frequency and $f = 0$. This behaviour is called
+aliasing, and is undesirable in most usecases, since it distorts the signal with non-harmonic frequencies.
+
+When initially sampling an analogue signal, the main way to avoid aliasing is simply to use an analogue
+low-pass filter to remove any frequencies above the Nyquist limit before the signal is sampled to discrete
+time\autocite{an699},  which means there are no frequencies to be aliased. However, aliasing can also
+be an issue in some DSP operations that introduce new frequencies above the original signal, such as
+nonlinear waveshaping functions, i.e. an operation that applies a function $\omega(x)$ to the
+original signal $x$, where $\omega$ is non-linear.
+
+\begin{figure}
   \centering
-  \label{fig:aliasing_example}
-  \includegraphics[width=\textwidth]{Pictures/aliasing_example.png}
-  \caption{A \SI{440}{Hz} sine wave passed through $\omega(x) = \tanh(8x) \cdot\frac{1}{8}$ at two sample rates. The reflection
-    around the Nyquist frequency can very clearly be seen at \SI{11025}{Hz}.}
+  \includegraphics[width=\textwidth]{Pictures/resampled_tanh.png}
+  \caption{
+    A \SI{1800}{Hz} sine wave passed through the nonlinear waveshaping function $\omega(x) = \tanh(5x)$ at
+    different sample rates and resampling factors $N$. Given the high
+    samplerate, (a) can be seen as representing the
+    ideal signal over this frequency range. (c) and (d) additionally show the frequency response of the
+    interpolation/decemation filters used with oversampling. For better visualization, the logarithmic decibel  scale is used on the vertical axis: $ z\; \mathrm{dB} = 20 \cdot \log_{10}(z) $.
+  }
+  \label{fig:resampled_tanh}
 \end{figure}
 
-\begin{figure}[H]
-  \centering
-  \label{fig:resampled_tanh}
-  \includegraphics[width=\textwidth]{Pictures/resampled_tanh.png}
-  \caption{The same nonlinear transform, but applied through1}
-\end{figure}
+\subsection{Waveshaping Distortion}
+
+A simple and common example of nonlinear waveshaping is distortion using the hyperbolic-tangent trigonometric
+function $\omega(x) = \tanh(x)$ (or, in practice, a polynomial approximation thereof). By adjusting the gain
+of the input, i.e $\omega(x) = \tanh(g\cdot x)$, the effect can span from a soft saturation to hard clipping. When
+looking at the frequency spectrum, this introduces frequencies above the original signal, and in the case
+where the input is a simple sine wave (i.e. a single peak frequency), this waveshaping operation introduces
+odd harmonics, that is it introduces frequencies at odd multiples of the frequencies in the original signal.
+Adjusting the gain will change the magnitude (volume) of these frequencies.
+
+In the following introduction to aliasing and oversampling, I will refer heavilly to the graphs in
+\autoref{fig:resampled_tanh}. These are visualizations of various runs of this waveshaping distortion, all with an
+input signal of a sine wave at \SI{1800}{Hz}, and $g = 5$. These parameters were
+chosen simply because of the visualizations they result in, but do reflect real-world usecases. (a) is
+generated at a very high sample rate relative to the visible frequency range, and can be regarded as
+representing the ideal signal. Here, the fundamental frequency at \SI{1800}{Hz} is visible as the
+first peak, and the harmonics can be seen at even intervals above the fundamental.
+
+\autoref{fig:resampled_tanh} (b) shows the same signal operation applied at 22050Hz, where the aliasing becomes
+evident. Notice that the added frequencies are a clear mirroring back and forth between the Nyquist frequency
+and 0 Hz. It should be very clear that these frequencies are unwanted, and it is especially worth noting that
+the aliasing has added frequencies below the fundamental, which will be particularly noticable. The signal we
+actually want when applying $\omega$ at 22050Hz, is the left half of (a), i.e. all the
+frequencies of the ideal signal that are representable at that sample rate, i.e. the ones that are below the
+Nyquist limit of 11025Hz.
 
 \section{Oversampling for Alias reduction}
-\section{Interpolation}
-\section{Decimation}
-\section{Resampling block}
+The most common approach to reduce the effects of aliasing in DSP algorithms, is oversampling, which is the
+operation of upsampling by a factor of $N$, performing the required operations on the
+signal, and then downsampling by $N$ again, to return to the original sample rate. The
+basic idea is, that by raising the sample rate, you raise the Nyquist frequency, which means the point at
+which frequencies will be mirrored is raised. This results in a smaller part of the signal being mirrored,
+and the first area that the loudest frequencies will be mirrored onto, is above the original Nyquist limit,
+and can be removed when downsampling to the original sample rate.
+
+The effects of this process can be seen in \autoref{fig:resampled_tanh}, where (c) and (d) show the operation
+applied with upsampling of $N = 2$ and $N = 4$. Ignoring the frequency response
+of the filter (shown in orange), these plots clearly show less aliasing, with no visible aliasing at all for
+$N = 4$. With $N = 2$ it can be seen that the mirroring has happened at
+$f = \SI{22050}{Hz}$ instead, but then the frequencies above $\SI{11025}{Hz}$ have been filtered out.
+This clearly shows how oversampling reduces the effects of aliasing, and for this operation with this data,
+it looks like $N = 4$ is enough. However, $N = 8$ is often chosen in the more
+general case \autocite{kahles2019oversampling}
+
+There are other and more efficient ways to avoid aliasing\autocite{7865908}, but they mostly depend on
+specific knowledge of the nonlinear operation that is being used, and oversampling is widely recognized as
+the standard method for alias reduction\autocite{kahles2019oversampling, deman2014}.
+
+\subsection{Interpolation}
+
+I will briefly introduce the most common method of increasing the sample rate of a sampled signal, in which
+the signal is first zero-stuffed and then interpolated using a filter. Like with alias reduction, this is an
+area where many variants and other methods have been developed\autocite{SORIA2013, castillocomparative}, and this section vastly
+simplifies the subject. However, it gives a general understanding of the problems involved, and how they are
+most commonly solved.
+
+It is also worth noting that the terms \emph{upsampling} and \emph{interpolation} are often conflated.
+This can lead to some confusion, however when not talking about the implementation details of either, both
+terms usually refer to the joint operation of upsampling and interpolation.
+
+The first step is to simply increase the sample rate of the signal. This is done by \emph{zero-stuffing}
+the signal, i.e. inserting $N - 1$ zeros between each sample. In \autoref{fig:interpolation} the
+result of this operation can be seen in the time and frequency domains. In the frequency domain, two things
+have happened: The gain of the signal has been scaled by $\frac{1}{N}$, and the signal has been
+mirrored around the old Nyquist frequency $f_{N1}$. The gain is simply restored by multiplying
+each sample by $N$, and for the new signal above $f_{N1}$, we can use a low
+pass filter to remove them.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{Pictures/interpolation.png}
+  \caption{The effects of zero-stuffing on the waveform and frequency spectrum. The input signal is the same saturated
+    1800Hz sine wave as used in \autoref{fig:resampled_tanh}, and the sample rates are 22050Hz and 44100Hz before and  after upsampling respectively. To clearly show the
+    reduction in gain on upsampling, linear gain is used on the vertical axis of the frequency graphs.}
+  \label{fig:interpolation}
+\end{figure}
+
+\subsection{FIR Filters}
+
+There are a lot of methods to designing and implementing interpolation filters for the best and most
+efficient results, but most of them are based on Finite Impulse Response (FIR) filters. A FIR filter of order
+$N$ is a simple convolution operation where each output is a weighted sum of the
+$N + 1$ most recent inputs. Designing FIR filters, i.e. picking the right coefficients, is a
+heavilly researched topic\autocite{kahles2019oversampling, SORIA2013, thomas2009}, and not something I will go into in this project, however,
+the filters used for testing and for \autoref{fig:resampled_tanh}, are FIR filters of order $N = 128$,
+designed using the method described in \autocite{fiir}. These filters have a fairly high order to
+ensure a very steep cutoff, but in real use there is a tradeoff between the efficiency of a lower filter
+order, and the better results of a harder cutoff point.
+
+\subsection{Decimation}
+
+When downsampling, we first need to remove any frequencies above the Nyquist limit of the resulting sample
+rate, since those will otherwise be aliased, which was the original reason for oversampling. This process is
+called \emph{decimation}, and consists of running a lowpass filter and then selecting every
+$N^\mathrm{th}$ sample for output. Thus, it closely resembles interpolation, and in fact the same
+filter can be used for both, even though different ones are often used for the best results, partly because
+decimation allows for some special optimizations, as only every $N^\mathrm{th}$ sample is actually
+required, which means some computations can be skipped in the FIR filter. These topics are covered in many of
+the referenced sources of this chapter, such as \autocite{kahles2019oversampling, SORIA2013, thomas2009}.
+
+\section{Multirate in the Algebra of Blocks}
+
+Now that we know why resampling is important, and the basics of how it is implemented, I will look at how to
+integrate it in the block algebra introduced in \autoref{chap:blocks}.
+
+\subsection{Approach I}
+In the most general model, multirate blocks are introduced by adding an extra parameter
+$R$ to blocks, which is the ratio of the sample rates $f_{out}/f_{in}$.
+
+\todo{Describe this approach}
+
+\subsection{Approach II}
 
 \todo{argue this model of resampling instead of different in/out rates}
 
@@ -31,4 +158,4 @@
   \caption{The resample block as implemented in the EDA library}
 \end{figure}
 
-\subsection{C++ Implementation}
+\section{Multirate in the EDA Library}

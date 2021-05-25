@@ -12,8 +12,7 @@
   pattern radius/.store in=\mcRadius,
   pattern radius = 1pt,
   pattern color={rgb, 255:red, 128; green, 128; blue, 128}}
-\makeatletter
-\pgfutil@ifundefined{pgf@pattern@name@cross}{
+\makeatletter \pgfutil@ifundefined{pgf@pattern@name@cross}{
   \pgfdeclarepatternformonly[\mcThickness,\mcSize]{cross}
   {\pgfqpoint{0pt}{0pt}}
   {\pgfpoint{\mcSize+\mcThickness}{\mcSize+\mcThickness}}
@@ -93,9 +92,8 @@
   \draw [shift={(375,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) ..%Straight Lines [id:da7316790788972058] 
   controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;	\draw    (345,75) -- (373,75) ;  \draw [shift={(375,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) ..
   controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and%Straight Lines [id:da33952400525932536] 
-  (6.95,1.4) .. (10.93,3.29)   ;
-  \draw    (425,75) -- (468,75) ; \draw [shift={(470,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls
-  (3.31,0.3) and (6.95,1.4) .. (10.93,3.29) ;%Straight Lines [id:da7869421415110118] 
+  (6.95,1.4) .. (10.93,3.29)   ; \draw    (425,75) -- (468,75) ; \draw [shift={(470,75)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and
+  (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29) ;%Straight Lines [id:da7869421415110118] 
 
   \draw    (425,65) -- (468,65) ;
   \draw [shift={(470,65)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls
