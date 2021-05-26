@@ -1,60 +1,80 @@
-\chapter{Block Diagrams}
-\label{chap:blocks}
-
 \newcommand{\Ident}{\ensuremath{\textrm{ident}}}
 \newcommand{\Cut}{\ensuremath{\textrm{cut}}}
-\newcommand{\Sequential}{\ensuremath{\textrm{sequential}}}
-\newcommand{\Parallel}{\ensuremath{\textrm{parallel}}}
-\newcommand{\Recursive}{\ensuremath{\textrm{recursive}}}
+\newcommand{\Sequential}{\ensuremath{\textrm{seq}}}
+\newcommand{\Parallel}{\ensuremath{\textrm{par}}}
+\newcommand{\Recursive}{\ensuremath{\textrm{rec}}}
+\newcommand{\Resample}{\ensuremath{\textrm{resample}}}
 \newcommand{\Split}{\ensuremath{\textrm{split}}}
 \newcommand{\Merge}{\ensuremath{\textrm{merge}}}
 \newcommand{\Ins}{\ensuremath{\textbf{ins}}}
 \newcommand{\Outs}{\ensuremath{\textbf{outs}}}
 \newcommand{\Sig}{\ensuremath{\mathbb{S}}}
+\newcommand{\SigP}[1]{\ensuremath{\llbracket #1 \rrbracket}}
 
-\todo{Introduce block diagrams}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Block Diagrams}
+\label{chap:blocks}
 
 \section{Algebra of Blocks}
 
 In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
-basic block diagram operations. In \autocite{orlarey2004} they expand with two extra compositional
-operations, split and merge. The following section will give a short introduction to this algebra of blocks,
-and then go into details on how I implemented them in C++.
+basic block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
+operations, split and merge. The rest of this chapter introduces this algebra of blocks in a language very
+similar to \autocite{orlarey2004}, with minor differences in syntax and semantics noted along the way.
 
-A block is a computational unit, which takes a certain number of input signals, and returns a number of
-output signals. They model impure functions of the form $\mathbb{S}^n\rightarrow \mathbb{S}^m$, that may have
-\emph{memory}, i.e. depend on input from previous iterations. Signals are continuous streams of
-data at a fixed rate, which for the scope of this project is limited to a single type,
-\cpp{float}. 32-bit floating point numbers are a fairly common datatype for DSP operations,
-although work is also being done with fixed-point numbers.\todo{cite}
+\begin{description}
+  \item[A Signal] is a discrete function of time, such that the value of a signal $s \in \Sig$ at time
+        $t$ is denoted $s(t)$. The full set of all signals is written as
+        $\Sig = \mathbb N \rightarrow \mathbb R$. Signals are mostly used in signal tuples, denoted as $(s_1, \dots, s_n) \in \Sig^n$. To
+        simplify the semantic specifications in the following section, tuples of signal tuples are always flattened,
+        i.e. $\forall s \in \Sig: s = (s)$, and $\forall a \in \Sig^n, b \in \Sig^m : (a, b) = (a_1, \dots, a_n, b_1, \dots, b_m)$
 
-Given a set $\mathbb{B}$ of primitive domain-specific blocks, we describe a block diagram
-$d \in \mathbb{D}$ as terms of the language $\mathbb{D}$
+        In use with AD/DA converters and other audio software, it is convention to let the full range of signals be
+        $[-1; 1]$, and mostly this is represented as a 32-bit floating point value. Notice however, that
+        signals may exceed this range, although inputs and outputs of the top-level signal processor should not.
 
-\begin{align*}
-  d, d_1, d_2 \in \mathbb{D} & ::= b \in \mathbb{B}      \\
-                             & |\; \Ident                \\
-                             & |\; \Cut                  \\
-                             & |\; \Sequential(d_1, d_2) \\
-                             & |\; \Parallel(d_1, d_2)   \\
-                             & |\; \Recursive(d_1, d_2)  \\
-                             & |\; \Split(d_1, d_2)      \\
-                             & |\; \Merge(d_1, d_2)      \\
-\end{align*}
+  \item[A Signal Processor] is a function $S^n \rightarrow S^m$, and the object of the model. Signal processors are
+        a transformation from a number of \emph{input} signals to a number of \emph{output}
+        signals, which are evaluated for each time value $t$ in order. The result
+        $p(s)(t)$ of signal processor $p$ may depend on $s(t')$ for
+        all $t' < t$, in other words, signal processors may have \emph{memory}.
 
-Faust (and \autocite{orlarey2002}) uses single-character operator syntax for these operations, but since the
-same syntax cannot be achieved exactly in C++, I will be referring to them by their names as prefix
-functions.
+        The full set of signal processors is notated as $\mathbb P = \bigcup_{n,m} \Sig^n \rightarrow \Sig^m$
 
-Any element $d \in \mathbb{D}$ has a number of input ports $\Ins(d)$, and
-$\Outs(d)$. These values must be predefined for the primitive blocks $\mathbb{B} \cup \{\Ident, \Cut\}$, and
-can be computed for the block composition operations, based only on the $\Ins$ and
-$\Outs$ of the operands.
+  \item[A Block] is the computational unit used to model signal processors. It is described in terms of the
+        recursive language $\mathbb D$:
+        \begin{align*}
+          d, d_1, d_2 \in \mathbb{D} & ::= b \in \mathbb{B}      \\
+                                     & |\; \Ident                \\
+                                     & |\; \Cut                  \\
+                                     & |\; \Sequential(d_1, d_2) \\
+                                     & |\; \Parallel(d_1, d_2)   \\
+                                     & |\; \Recursive(d_1, d_2)  \\
+                                     & |\; \Split(d_1, d_2)      \\
+                                     & |\; \Merge(d_1, d_2)      \\
+        \end{align*}
+        Here, $\mathbb B$ denotes a domain-specific set of primitive blocks. Some of these will be
+        addressed in a later section.
+
+        Faust and the related papers\autocite{orlarey2002,orlarey2004} uses single-character operator syntax for the basic
+        operators of $\mathbb D$, but since the same syntax cannot be achieved exactly in C++, I will be
+        referring to them by their names as prefix functions to avoid confusion. The later chapter on the C++
+        implementation will cover the chosen syntax.
+
+        To separate the syntax of blocks from the semantics, the function $\SigP{\ .\ } : \mathbb D
+          \rightarrow \mathbb P$ is used to map a
+        block diagram $d$ to the corresponding signal processor $\SigP{d}$.
+
+        We also introduce the type-like syntax $d : i \rightarrow o$ to mean $\SigP{d} : \Sig^i \rightarrow \Sig^o$. This is useful
+        for declaring the type rules, which are covered in the following section.
+\end{description}
 
 \subsection{Basic block operations}
 Each of these seven block operations is described in detail by the FAUST authors in \autocite{orlarey2002}
 and \autocite{orlarey2004}, so here I will only give a brief introduction to each one, along with an example
-illustration, and
+illustration and the type rules. Some are slightly simplified here when possible to still get the same
+expressivity, in those cases it will be noted.
 
 \begin{table}[]
   \centering
@@ -80,12 +100,9 @@ The $\Ident$ block is the simplest block - it simply takes one input signal, and
 same signal untouched.
 
 \begin{minipage}{0.5\linewidth}
-  \begin{prooftree}
-    \AxiomC{}
-    \UnaryInfC{$\Ident: \Sig \rightarrow \Sig$}
-  \end{prooftree}
   \begin{align*}
-    \Ident(x) & = x
+    \Ident: 1        & \rightarrow 1 \\
+    \SigP{\Ident}(s) & = s
   \end{align*}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
@@ -101,12 +118,9 @@ The $\Cut$ block takes one input signal and outputs nothing. It can be very usef
 discarding signals when composing blocks.
 
 \begin{minipage}{0.5\linewidth}
-  \begin{prooftree}
-    \AxiomC{}
-    \UnaryInfC{$\Cut: \Sig \rightarrow \emptyset$}
-  \end{prooftree}
   \begin{align*}
-    \Cut(x) & = ()
+    \Cut: 1        & \rightarrow 0 \\
+    \SigP{\Cut}(s) & = ()
   \end{align*}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
@@ -125,12 +139,12 @@ by combinations of sequential and parallel compositions, they have been left out
 
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^p$}
-    \AxiomC{$d_2 : \Sig^{p} \rightarrow \Sig^m$}
-    \BinaryInfC{$\Sequential(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+    \AxiomC{$d_1 : n \rightarrow p$}
+    \AxiomC{$d_2 : p \rightarrow m$}
+    \BinaryInfC{$\Sequential(d_1, d_2) : n \rightarrow m$}
   \end{prooftree}
   \begin{align*}
-    \Sequential(d_1, d_2)(\mathbf{x})    ={} & d_2(d_1(\mathbf{x}))
+    \SigP{\Sequential(d_1, d_2)}(s_1, \dots, s_n)    ={} & \SigP{d_2}\left(\SigP{d_1}(s_1, \dots, s_n)\right)
   \end{align*}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
@@ -148,13 +162,13 @@ input.
 
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : \Sig^{n_1} \rightarrow \Sig^{m_1}$}
-    \AxiomC{$d_2 : \Sig^{n_2} \rightarrow \Sig^{m_2}$}
-    \BinaryInfC{$\Parallel(d_1, d_2) : \Sig^{n_1 + n_2} \rightarrow \Sig^{m_1 + m_2}$}
+    \AxiomC{$d_1 : i_1 \rightarrow o_1$}
+    \AxiomC{$d_2 : i_2 \rightarrow o_2$}
+    \BinaryInfC{$\Parallel(d_1, d_2) : i_1 + i_2 \rightarrow o_1 + o_2$}
   \end{prooftree}
   \begin{align*}
-    \Parallel(d_1, d_2)(\mathbf{x})            ={} & (d_1(x_1, \dots, x_{n_1}),              \\
-                                                   & d_2(x_{n_1 + 1}, \dots, x_{n_1 + n_2})) \\
+    \SigP{\Parallel(d_1, d_2)}(s_1, \dots, s_{i_1}, x_1, \dots, x_{i_2}) ={} ( & \SigP{d_1}(s_1, \dots, s_{i_1}),   \\
+                                                                               & \SigP{d_2}(x_{1}, \dots, x_{i_2})) \\
   \end{align*}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
@@ -179,16 +193,21 @@ by a small square on the connection.
 
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : \Sig^{n_1} \rightarrow \Sig^{m_1}$}
-    \AxiomC{$d_2 : \Sig^{n_2} \rightarrow \Sig^{m_2}$}
-    \AxiomC{$m_2 \leq n_1$}
-    \AxiomC{$n_2 \leq m_1$}
-    \QuaternaryInfC{$\Recursive(d_1, d_2) : \Sig^{n_1 - m_2} \rightarrow \Sig^{m_1}$}
+    \AxiomC{$d_1 : i_1 \rightarrow o_1$}
+    \AxiomC{$d_2 : i_2 \rightarrow o_2$}
+    \AxiomC{$o_2 \leq i_1$}
+    \AxiomC{$i_2 \leq o_1$}
+    \QuaternaryInfC{$\Recursive(d_1, d_2) : i_1 - o_2 \rightarrow o_1$}
   \end{prooftree}
-  \begin{align*}
-    \Recursive(d_1, d_2)(\mathbf{x}) ={} & d_1(d_2(x'_1, \dots, x'_{n_2})_1, \dots d_2(x'_1, \dots, x'_{n_2})_{m_2}, ) \\
-  \end{align*}
-  \todo{what would be the best notation for these?}
+  \begin{prooftree}
+    \AxiomC{$
+        \SigP{d_2}(y'_1,\dots, y'_{i_2}) = (r_1, \dots, r_{o_2}) \\
+        \SigP{d_1}(r_1, \dots, r_{o_2}, s_1, \dots, s_{n}) = (y_1,\dots, y_{o_2})
+      $ }
+    \UnaryInfC{$\SigP{\Recursive(d_1, d_2)}(s_1, \dots, s_{n}) ={} & (y_1, \dots, y_{o_2})$}
+  \end{prooftree}
+  Where $y'$ is the signal $y$ delayed by one sample, i.e \\
+  $\forall y \in \Sig, t \in \mathbb{N}^+ : y'(0) = 0, y'(t) = y(t - 1)$
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
@@ -205,10 +224,10 @@ number of times, and this number is required to be an integer. This means $\Ins(
 exact multiple of $\Outs(d_1)$. \newcommand{\Mod}{\mathrm{\ mod\ }}
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^p$}
-    \AxiomC{$d_2 : \Sig^{p * k} \rightarrow \Sig^m$}
+    \AxiomC{$d_1 : i_1 \rightarrow o_1$}
+    \AxiomC{$d_2 : o_1 * k \rightarrow o_2$}
     \AxiomC{$k \in \mathbb{N}$}
-    \TrinaryInfC{$\Split(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+    \TrinaryInfC{$\Split(d_1, d_2) : i_1 \rightarrow o_2$}
   \end{prooftree}
   \begin{align*}
     \Split(d_1, d_2)(\mathbf{x})                ={} &
