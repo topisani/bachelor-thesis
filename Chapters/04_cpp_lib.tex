@@ -1,0 +1,461 @@
+\chapter{The C++ Library}
+
+% When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to
+% separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented
+% for the AST, such as a basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a
+% visual representation of the AST, like fausts block diagram generator.
+% 
+% \todo{Introduce Bachelet/Yon (\url{https://hal.archives-ouvertes.fr/hal-01351060/document}) as a reference point for this section}
+
+One important design decision in this library, is to split the declaration of a block diagram from the
+evaluation of the corresponding signal processor. While this makes implementing new block types slightly more
+verbose, it has a couple of advantages. Most importantly, a block diagram is a static structure that can be
+declared once, even constructed at compile time in many cases, and then multiple instances of the signal
+processor can be constructed at runtime as needed. Secondly, having the block diagram available as a
+declarative structure makes other evaluators than the signal processor possible, such as one that builds a
+visualization of the block diagram.
+
+\section{Blocks}
+
+\subsubsection{BlockBase}
+
+As described in the previous chapter, a block in $\mathbb D$ has a number of inputs and a number of
+outputs. In EDA, these are modelled by extending the \cpp{BlockBase} CRTP\footnotemark{} base class, meaning a base class
+template that is always passed the derived class as its first template parameter:
+
+\footnotetext{Curriously Recurring Template Pattern, see \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}}
+
+\begin{cppcodenl}
+template<typename Derived, std::size_t InChannels, std::size_t OutChannels>
+struct BlockBase {
+  static constexpr std::size_t in_channels = InChannels;
+  static constexpr std::size_t out_channels = OutChannels;
+
+  constexpr auto operator()(auto&&... inputs) const noexcept 
+    requires(sizeof...(inputs) <= InChannels);
+};
+\end{cppcodenl}
+
+This base class provides the \cpp{in_channels} and \cpp{out_channels} constants, along with the call operator used
+for partial application (see \autoref{sec:eda_partial_application}).
+
+\subsubsection{AnyBlock, AnyBlockRef and ABlock}
+
+Three basic concepts are introduced as well to check whether a type \cpp{T} is a block, a
+block with or without reference/const/volatile qualifiers, or a block with a specific signature.
+\concept{AnyBlock} also requires a type to model \cpp{std::copyable}\footnotemark, to make sure that
+blocks can be copied around.
+
+\footnotetext{See \url{https://en.cppreference.com/w/cpp/concepts/copyable}}
+
+\begin{cppcodenl}
+template<typename T>
+concept AnyBlock = std::is_base_of_v<BlockBase<T, T::in_channels, T::out_channels>, T> && std::copyable<T>;
+
+template<typename T>
+concept AnyBlockRef = AnyBlock<std::remove_cvref_t<T>>;
+
+template<typename T, std::size_t I, std::size_t O>
+concept ABlock = AnyBlock<T> &&(T::in_channels == I) && (T::out_channels == O);
+\end{cppcodenl}
+
+The \concept{ABlock} concept is especially useful when used as a placeholder type for declaring block
+diagrams:
+
+\begin{cppcodenl}
+  ABlock<1, 2> auto d = (_ << (_ + _, _ * _));
+\end{cppcodenl}
+
+Here the \cpp{ABlock<1, 2>} prefix becomes a checked annotation that \cpp{d} is a block with signature $1 \rightarrow 2$.
+
+\subsubsection{\cpp{ins<T>} and \cpp{outs<T>}}
+
+To access the number of input/output channels, the following shorthand variable templates are introduced:
+
+\begin{cppcodenl}
+template<AnyBlockRef T>
+constexpr auto ins = std::remove_cvref_t<T>::in_channels;
+
+template<AnyBlockRef T>
+constexpr auto outs = std::remove_cvref_t<T>::out_channels;
+\end{cppcodenl}
+
+They allow \cpp{ins<T> == 2} when \cpp{T} is a cv/ref-qualified block, i.e. it models \concept{AnyBlockRef}.
+
+\subsection{Identity block}
+As the simplest example of a block type declaration, I take a look at the identity block. For convenience, it
+has here been extended with a template parameter \cpp{N} to allow for identity blocks of
+different numbers of channels.
+\cpp{ident<N>} is equal to the parallel composition of \cpp{N} identity blocks. As a side note, the \Cut block has been
+extended in a similar manner.
+
+\begin{cppcodenl}
+  template<std::size_t N = 1>
+  struct Ident : BlockBase<Ident<N>, N, N> {};
+  
+  template<std::size_t N = 1>
+  constexpr Ident<N> ident;
+\end{cppcodenl}
+
+Here, the declaration consists of two parts, the \cpp{Ident} type itself, which inherits from \cpp{BlockBase}, and the constant
+\cpp{ident} variable template, which serves the function of the constructor.
+
+\section{Block Compositions}
+
+\subsubsection{CompositionBase}
+
+Block compositions are implemented as class templates that derive from \cpp{CompositionBase}, which iself
+derives from
+\cpp{BlockBase}. \cpp{CompositionBase} keeps a tuple of the operand blocks, which can then be accessed by the
+deriving class. Likr \cpp{BlockBase}, it is a CRTP-style base class template, so its first template
+parameter is the class that is deriving from it.
+
+\begin{cppcodenl}
+  template<typename D, std::size_t In, std::size_t Out, AnyBlock... Operands>
+  struct CompositionBase : BlockBase<D, In, Out> {
+    using operands_t = std::tuple<Operands...>;
+    constexpr CompositionBase(Operands... ops) noexcept : operands(std::move(ops)...) {}
+    operands_t operands;
+  };
+\end{cppcodenl}
+
+\subsubsection{AComposition and ACompositionRef}
+Once again, a couple of acompanying concepts are added to check that a type \cpp{T} is a
+composition or reference to one:
+
+\begin{cppcodenl}
+  template<typename T>
+  concept AComposition = AnyBlock<T> && requires (T& t) {
+    typename T::operands_t; 
+    { t.operands } -> util::decays_to<typename T::operands_t>;
+  };
+
+  template<typename T>
+  concept ACompositionRef = AComposition<std::remove_cvref_t<T>>;
+\end{cppcodenl}
+
+\subsubsection{\cpp{operands_t}}
+
+As a shorthand for accessing the type of the operands of a cv-ref qualified composition, the
+\cpp{operands_t<T>} alias template is added:
+
+\begin{cppcodenl}
+  template<ACompositionRef T>
+  using operands_t = typename std::remove_cvref_t<T>::operands_t;
+\end{cppcodenl}
+
+\subsubsection{Sequential}
+
+Recall the type rule for sequential composition from \autoref{sec:block_seq}:
+
+\begin{prooftree}
+  \AxiomC{$d_1 : n \rightarrow p$}
+  \AxiomC{$d_2 : p \rightarrow m$}
+  \BinaryInfC{$\Sequential(d_1, d_2) : n \rightarrow m$}
+\end{prooftree}
+
+Using type constraints, this can be encoded as the following block declaration:
+
+\begin{cppcodenl}
+  template<AnyBlock Lhs, AnyBlock Rhs>
+  requires(outs<Lhs> == ins<Rhs>) 
+  struct Sequential : CompositionBase<Sequential<Lhs, Rhs>, ins<Lhs>, outs<Rhs>, Lhs, Rhs> {};
+\end{cppcodenl}
+
+First of all, \cpp{Lhs} and \cpp{Rhs} must both model the concept \cpp{AnyBlock}, which simply
+ensures that the types given are in fact blocks. Secondly, a \emph{requires-clause} is added to the struct
+declaration to assert that the outputs of \cpp{Lhs} is equal to the inputs of \cpp{Rhs}. If these requirements are unsatisfied,
+the compiler emits useful error messages that are fairly easy to trace (see \autoref{sec:eda_errors}). The
+second and third template parameters to \cpp{CompositionBase} specify the number of input and output
+channels, so by passing \cpp{ins<Lhs>} and \cpp{outs<Rhs>} respectively,
+\cpp{Sequential<Lhs, Rhs>} has the signature $n \rightarrow m$ as specified in the type rule. Finally, \cpp{Lhs} and
+\cpp{Rhs} are passed as the \cpp{Operands...} argument to \cpp{CompositionBase}, meaning those blocks will be stored
+in the \cpp{std::tuple<Lhs, Rhs> operands} member variable
+
+For ease of construction, the free function \cpp{seq(a, b)} is written as follows:
+
+\begin{cppcodenl}
+  template<AnyBlockRef Lhs, AnyBlockRef Rhs>
+  constexpr auto seq(Lhs&& lhs, Rhs&& rhs) noexcept
+  {
+    return Sequential<std::remove_cvref_t<Lhs>, std::remove_cvref_t<Rhs>>{ 
+      .lhs = std::forward<Lhs>(lhs), 
+      .rhs = std::forward<Rhs>(rhs)
+    };
+  }
+\end{cppcodenl}
+
+\subsubsection{Remaining Binary compositions}
+
+When declaring a block diagram (as opposed to when evaluating its signal processor), the only differences
+between the various compositional operators are the requirements for the operands and the calculation of the
+signature. For example, parallel composition is declared as follows:
+
+\begin{cppcodenl}
+  template<AnyBlock Lhs, AnyBlock Rhs>
+  struct Parallel : CompositionBase<Parallel<Lhs, Rhs>, ins<Lhs> + ins<Rhs>, outs<Lhs> + outs<Rhs>, Lhs, Rhs> {};
+\end{cppcodenl}
+
+Here the signature is calculated differently from sequential composition, and there are no requirements on
+\cpp{Lhs} and \cpp{Rhs}. Recursive, split, and merge composition are all
+implemented similarly by simply translating the requirements and signature to C++ type requirements.
+\todo{Reference the code in the appendix}
+
+\section{Literals and References}
+
+By now we know how to declare primitive and compositional blocks, so the following code should seem natural.
+\begin{cppcodenl}
+  struct Literal : BlockBase<Literal, 0, 1> {
+    float value;
+  };
+
+  constexpr Literal literal(float f) noexcept {
+    return Literal{.value = f};
+  }
+  
+  struct Ref : BlockBase<Ref, 0, 1> {
+    float* ptr = nullptr;
+  };
+
+  constexpr Ref ref(float& f) noexcept
+  {
+    return Ref{.ptr = &f};
+  }
+\end{cppcodenl}
+
+The \cpp{Literal} and \cpp{Ref} blocks each have a signature of $0 \rightarrow 1$, and can be used to
+introduce scalar values into the block diagram. \cpp{Literal} is used for constants, and \cpp{Ref} is used for values that change
+over time, i.e. non-signal values used to control parameters of the signal processor. This is a problem that
+faust solves using functions that model UI elements, such as \cpp{vslider(name, ...)}\autocite{orlarey2004}
+
+\section{Operator overloads and shorthand syntax}
+
+With the block types and construction functions, block diagrams can be declared by composing the
+constructors:
+
+\begin{cppcodenl}
+  ABlock<2, 1> auto d = seq(seq(ident<2>, par(ident<1>, ident<1>)), par(cut<1>, ident<1>));
+\end{cppcodenl}
+
+Ignoring for now that $\SigP{d}$ does nothing other than discarding the first of two signals (i.e.
+$\SigP{d} = \SigP{\Parallel(\Cut, \Ident)}$), the issue at hand is the verbosity of the declaration of \cpp{d}.
+Since the goal of the project is to
+
+\todo{Basics of how operator overloading is used}\\
+\todo{Mention of boxing literals, as well as marking types as valid operands}
+\begin{cppcodenl}
+  constexpr decltype(auto) as_block(AnyBlockRef auto&& input) noexcept
+  {
+    return std::forward<decltype(input)>(input);
+  }
+
+  constexpr Literal as_block(float f) noexcept
+  {
+    return literal(f);
+  }
+
+  template<typename T>
+  using as_block_t = std::remove_cvref_t<decltype(as_block(std::declval<T>()))>;
+\end{cppcodenl}
+
+\begin{cppcodenl}
+  // LITERAL ///////////////////////////////////////////
+
+  constexpr Literal operator"" _eda(long double f) noexcept
+  {
+    return as_block(static_cast<float>(f));
+  }
+  constexpr Literal operator"" _eda(unsigned long long f) noexcept
+  {
+    return as_block(static_cast<float>(f));
+  }
+
+  // IDENT /////////////////////////////////////////////
+
+  constexpr Ident<1> _ = ident<1>;
+  constexpr Cut<1> cut = cut<1>;
+
+  // PARALLEL //////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator,(Lhs&& lhs, Rhs&& rhs) noexcept //
+    requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return parallel(as_block(FWD(lhs)), as_block(FWD(rhs)));
+  }
+
+  // SEQUENTIAL ////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator|(Lhs&& lhs, Rhs&& rhs) noexcept //
+    requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return sequential(as_block(FWD(lhs)), as_block(FWD(rhs)));
+  }
+
+  // Split /////////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator<<(Lhs&& lhs, Rhs&& rhs) noexcept //
+    requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return split(as_block(FWD(lhs)), as_block(FWD(rhs)));
+  }
+
+  // MERGE /////////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator>>(Lhs&& lhs, Rhs&& rhs) noexcept //
+    requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return merge(as_block(FWD(lhs)), as_block(FWD(rhs)));
+  }
+
+  // ARITHMETIC ////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator+(Lhs&& lhs, Rhs&& rhs) noexcept requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return plus(lhs, rhs);
+  }
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator-(Lhs&& lhs, Rhs&& rhs) noexcept requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return minus(lhs, rhs);
+  }
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator*(Lhs&& lhs, Rhs&& rhs) noexcept requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return times(lhs, rhs);
+  }
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator/(Lhs&& lhs, Rhs&& rhs) noexcept requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return divide(lhs, rhs);
+  }
+
+  // RECURSIVE /////////////////////////////////////////
+
+  template<typename Lhs, typename Rhs>
+  constexpr auto operator%(Lhs&& lhs, Rhs&& rhs) noexcept requires(AnyBlockRef<Lhs> || AnyBlockRef<Rhs>)
+  {
+    return recursive(as_block(FWD(lhs)), as_block(FWD(rhs)));
+  }
+\end{cppcodenl}
+
+\section{Partial function application}
+\label{sec:eda_partial_application}
+\begin{cppcodenl}
+  template<AnyBlock Block, AnyBlock... Inputs>
+  requires((outs<Inputs> <= ins<Block>) &&...) //
+    struct Partial
+    : BlockBase<Partial<Block, Inputs...>, ins<Block> + (ins<Inputs> + ...) - (outs<Inputs> + ...), outs<Block>> {
+    constexpr Partial(Block b, Inputs... input) noexcept : block(b), inputs(input...) {}
+
+    Block block;
+    std::tuple<Inputs...> inputs;
+  };
+
+  template<typename D, std::size_t I, std::size_t O>
+  constexpr auto BlockBase<D, I, O>::operator()(auto&&... inputs) const noexcept //
+    requires(sizeof...(inputs) <= I)
+  {
+    return Partial<D, as_block_t<decltype(inputs)>...>(static_cast<const D&>(*this), as_block(FWD(inputs))...);
+  }
+\end{cppcodenl}
+
+\section{Repeat}
+\begin{cppcodenl}
+  template<std::size_t N>
+  constexpr auto repeat(AnyBlock auto const& block, auto&& composition) requires requires
+  {
+    composition(block, block);
+  }
+  {
+    if constexpr (N == 0) {
+      return ident<0>;
+    } else if constexpr (N == 1) {
+      return block;
+    } else {
+      return composition(block, repeat<N - 1>(block, composition));
+    }
+  }
+
+  template<std::size_t N>
+  constexpr auto repeat_seq(AnyBlock auto const& block)
+  {
+    return repeat<N>(block, [](auto&& a, auto&& b) { return seq(a, b); });
+  }
+
+  template<std::size_t N>
+  constexpr auto repeat_par(AnyBlock auto const& block)
+  {
+    return repeat<N>(block, [](auto&& a, auto&& b) { return par(a, b); });
+  }
+\end{cppcodenl}
+
+\section{Evaluating the AST}
+For simplicity, I assume \cpp{float} for all signals. \subsection{\cpp{Frame}}
+
+\section{Type erasure}
+\todo{Motivation? In practice this is important, but could it be left out of the report completely or partially?}
+\todo{How is this different from Bachelet/Yon?}\\
+\todo{Plan: \cpp{DynExpr<VISITORS..., TYPE>}, where \cpp{TYPE} might represent the full signature of the visitor, just the return type of the
+expression or something}
+
+\section{Block implementations}
+
+\begin{cppcodenl}
+  template<std::size_t In, std::size_t Out, util::Callable<Frame<Out>(Frame<In>)> F>
+  requires std::copyable<F>
+  struct FunBlock : BlockBase<FunBlock<In, Out, F>, In, Out> {
+    F func_;
+  };
+
+  template<std::size_t In, std::size_t Out>
+  constexpr auto fun(util::Callable<Frame<Out>(Frame<In>)> auto&& f)
+  {
+    return FunBlock<In, Out, std::decay_t<decltype(f)>>{.func_ = f};
+  }
+
+  constexpr auto sin = fun<1, 1>(&::sinf);
+  constexpr auto cos = fun<1, 1>(&::cosf);
+  constexpr auto tan = fun<1, 1>(&::tanf);
+  constexpr auto tanh = fun<1, 1>(&::tanhf);
+  constexpr auto mod = fun<2, 1>([](auto in) { return std::fmod(in[0], in[1]); });
+\end{cppcodenl}
+
+\begin{cppcodenl}
+  template<std::size_t In, std::size_t Out, typename Func, typename... States>
+  requires(util::Callable<Func, Frame<Out>(Frame<In>, States&...)>&& std::copyable<Func>) &&
+    (std::copyable<States> && ...) //
+    struct StatefulFunc : BlockBase<StatefulFunc<In, Out, Func, States...>, In, Out> {
+    Func func;
+    std::tuple<States...> states;
+  };
+
+  template<std::size_t In, std::size_t Out, typename... States>
+  constexpr auto fun(util::Callable<Frame<Out>(Frame<In>, std::remove_cvref_t<States>&...)> auto&& f,
+                     States&&... states)
+  {
+    return StatefulFunc<In, Out, std::decay_t<decltype(f)>, std::remove_cvref_t<States>...>{.func = f,
+                                                                                            .states = {FWD(states)...}};
+  }
+\end{cppcodenl}
+
+\begin{cppcodenl}
+  struct Plus : BlockBase<Plus, 2, 1> {};
+  constexpr Plus plus;
+  struct Minus : BlockBase<Minus, 2, 1> {};
+  constexpr Minus minus;
+  struct Times : BlockBase<Times, 2, 1> {};
+  constexpr Times times;
+  struct Divide : BlockBase<Divide, 2, 1> {};
+  constexpr Divide divide;
+\end{cppcodenl}
+
+\section{Compilation Errors}
+\label{sec:eda_errors}

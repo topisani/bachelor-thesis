@@ -1,25 +1,27 @@
-\newcommand{\Ident}{\ensuremath{\textrm{ident}}}
-\newcommand{\Cut}{\ensuremath{\textrm{cut}}}
-\newcommand{\Sequential}{\ensuremath{\textrm{seq}}}
-\newcommand{\Parallel}{\ensuremath{\textrm{par}}}
-\newcommand{\Recursive}{\ensuremath{\textrm{rec}}}
-\newcommand{\Resample}{\ensuremath{\textrm{resample}}}
-\newcommand{\Split}{\ensuremath{\textrm{split}}}
-\newcommand{\Merge}{\ensuremath{\textrm{merge}}}
-\newcommand{\Ins}{\ensuremath{\textbf{ins}}}
-\newcommand{\Outs}{\ensuremath{\textbf{outs}}}
-\newcommand{\Sig}{\ensuremath{\mathbb{S}}}
-\newcommand{\SigP}[1]{\ensuremath{\llbracket #1 \rrbracket}}
+\newcommand{\Ident}{\ensuremath{\textrm{ident}}\xspace}
+\newcommand{\Cut}{\ensuremath{\textrm{cut}}\xspace}
+\newcommand{\Sequential}{\ensuremath{\textrm{seq}}\xspace}
+\newcommand{\Parallel}{\ensuremath{\textrm{par}}\xspace}
+\newcommand{\Recursive}{\ensuremath{\textrm{rec}}\xspace}
+\newcommand{\Resample}{\ensuremath{\textrm{resample}}\xspace}
+\newcommand{\Split}{\ensuremath{\textrm{split}}\xspace}
+\newcommand{\Merge}{\ensuremath{\textrm{merge}}\xspace}
+\newcommand{\Ins}{\ensuremath{\textbf{ins}}\xspace}
+\newcommand{\Outs}{\ensuremath{\textbf{outs}}\xspace}
+\newcommand{\Sig}{\ensuremath{\mathbb{S}}\xspace}
+\newcommand{\SigP}[1]{\ensuremath{\llbracket #1 \rrbracket}\xspace}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Block Diagrams}
 \label{chap:blocks}
 
+\todo{Introduce the concept of block diagrams for describing signal processors}\\
+
 \section{Algebra of Blocks}
 
-In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
-basic block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
+In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five basic
+block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
 operations, split and merge. The rest of this chapter introduces this algebra of blocks in a language very
 similar to \autocite{orlarey2004}, with minor differences in syntax and semantics noted along the way.
 
@@ -80,15 +82,15 @@ expressivity, in those cases it will be noted.
   \centering
   \begin{tabular}{|l|c|c|c|c|}
     \hline
-    $d$                     & Faust Syntax   & EDA Syntax     & $\Ins(d)$                & $\Outs(d)$                \\
+    $d$                     & Faust Syntax                    & EDA Syntax               & $\Ins(d)$                 & $\Outs(d)$ \\
     \hline\hline
-    \Ident                  & \cpp{_}        & \cpp{_}        & 1                        & 1                         \\
-    \Cut                    & \cpp{!}        & \cpp{cut}      & 1                        & 0                         \\
-    $\Sequential(d_1, d_2)$ & \cpp{d1 : d2}  & \cpp{d1 | d2}  & $\Ins(d_1)$              & $\Outs(d_2)$              \\
-    $\Parallel(d_1, d_2)$   & \cpp{d1 , d2}  & \cpp{d1 , d2}  & $\Ins(d_1) + \Ins(d_2)$  & $\Outs(d_1) + \Outs(d_2)$ \\
-    $\Recursive(d_1, d_2)$  & \cpp{d1 ~ d2}  & \cpp{d1 \% d2} & $\Ins(d_1) - \Outs(d_2)$ & $\Outs(d_1)$              \\
-    $\Split(d_1, d_2)$      & \cpp{d1 <: d2} & \cpp{d1 << d2} & $\Ins(d_1)$              & $\Outs(d_2)$              \\
-    $\Merge(d_1, d_2)$      & \cpp{d1 :> d2} & \cpp{d1 >> d2} & $\Ins(d_1)$              & $\Outs(d_2)$              \\
+    \Ident                  & \cpp{_}        & \cpp{_}        & 1                        & 1                                      \\
+    \Cut                    & \cpp{!}        & \cpp{cut}      & 1                        & 0                                      \\
+    $\Sequential(d_1, d_2)$ & \cpp{d1 : d2}  & \cpp{d1 | d2}  & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
+    $\Parallel(d_1, d_2)$   & \cpp{d1 , d2}  & \cpp{d1 , d2}  & $\Ins(d_1) + \Ins(d_2)$  & $\Outs(d_1) + \Outs(d_2)$              \\
+    $\Recursive(d_1, d_2)$  & \cpp{d1 ~ d2}  & \cpp{d1 \% d2} & $\Ins(d_1) - \Outs(d_2)$ & $\Outs(d_1)$                           \\
+    $\Split(d_1, d_2)$      & \cpp{d1 <: d2} & \cpp{d1 << d2} & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
+    $\Merge(d_1, d_2)$      & \cpp{d1 :> d2} & \cpp{d1 >> d2} & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
     \hline
   \end{tabular}
   \caption{Basic block diagram compontents and their properties and syntax}
@@ -132,6 +134,7 @@ discarding signals when composing blocks.
 \end{minipage}
 
 \subsubsection{Sequential block composition}
+\label{sec:block_seq}
 The simplest composition of two blocks is passing the outputs of one block to the inputs of another in
 sequence. It requires the number of outputs of the first block to equal the number of inputs on the second.
 Faust has defined semantics for when this is not the case as well, but since those cases can all be covered
@@ -200,14 +203,17 @@ by a small square on the connection.
     \QuaternaryInfC{$\Recursive(d_1, d_2) : i_1 - o_2 \rightarrow o_1$}
   \end{prooftree}
   \begin{prooftree}
-    \AxiomC{$
-        \SigP{d_2}(y'_1,\dots, y'_{i_2}) = (r_1, \dots, r_{o_2}) \\
-        \SigP{d_1}(r_1, \dots, r_{o_2}, s_1, \dots, s_{n}) = (y_1,\dots, y_{o_2})
-      $ }
-    \UnaryInfC{$\SigP{\Recursive(d_1, d_2)}(s_1, \dots, s_{n}) ={} & (y_1, \dots, y_{o_2})$}
+    \AxiomC{$\begin{array}{l}
+          \SigP{d_1}(r_1, \dots, r_{o_2}, s_1, \dots, s_{n}) = (y_1,\dots, y_{o_1}) \\
+          \SigP{d_2}(y'_1,\dots, y'_{i_2}) = (r_1, \dots, r_{o_2})
+        \end{array}$}
+    \UnaryInfC{$\SigP{\Recursive(d_1, d_2)}(s_1, \dots, s_{n}) ={} (y_1, \dots, y_{o_2})$}
   \end{prooftree}
-  Where $y'$ is the signal $y$ delayed by one sample, i.e \\
-  $\forall y \in \Sig, t \in \mathbb{N}^+ : y'(0) = 0, y'(t) = y(t - 1)$
+  \vspace{\baselineskip}
+  Where $y'$ is the signal $y$ delayed by one sample, i.e
+  $$
+    \forall y \in \Sig, t \in \mathbb{N}^+ : y'(0) = 0, y'(t) = y(t - 1)
+  $$
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
@@ -229,14 +235,13 @@ exact multiple of $\Outs(d_1)$. \newcommand{\Mod}{\mathrm{\ mod\ }}
     \AxiomC{$k \in \mathbb{N}$}
     \TrinaryInfC{$\Split(d_1, d_2) : i_1 \rightarrow o_2$}
   \end{prooftree}
-  \begin{align*}
-    \Split(d_1, d_2)(\mathbf{x})                ={} &
-    \begin{aligned}[t]
-      d_2( & d_1(\mathbf{x})_{1 \Mod m_1}, \dots, \\
-           & d_1(\mathbf{x})_{n_2\Mod m_1})
-    \end{aligned}
-  \end{align*}
-\end{minipage}
+  \begin{prooftree}
+    \AxiomC{$\begin{array}{l}
+          \SigP{d_1}(s_1, \dots, s_{i_1}) = (x_1, \dots, x_{o_1}) \\
+          \forall j \in \{1, \dots, i_2\} y_j = x_{j \mod o_1}
+        \end{array}$}
+    \UnaryInfC{$\SigP{\Split(d_1, d_2)}(s_1, \dots, s_{i_1}) ={} \SigP{d_2}(y_1, \dots, y_{i_2})$}
+  \end{prooftree}\end{minipage}
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
     \centering
@@ -260,18 +265,18 @@ $\Sequential(d_1, d_2)$ when $k = 1$.
 
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : \Sig^{n} \rightarrow \Sig^{p*k}$}
-    \AxiomC{$d_2 : \Sig^{p} \rightarrow \Sig^m$}
+    \AxiomC{$d_1 : i_1 \rightarrow i_2 * k$}
+    \AxiomC{$d_2 : i_2 \rightarrow o_2$}
     \AxiomC{$k \in \mathbb{N}$}
-    \TrinaryInfC{$\Split(d_1, d_2) : \Sig^n \rightarrow \Sig^m$}
+    \TrinaryInfC{$\Merge(d_1, d_2) : i_1 \rightarrow o_2$}
   \end{prooftree}
-  \begin{align*}
-    \Merge(d_1, d_2)(\mathbf{x})                ={} &
-    \begin{aligned}[t]
-      d_2\Biggl( & \left(\sum^{{m_1}/{n_2} - 1}_{i=0}d_1(\mathbf{x})_{i \cdot n_2 + 1}\right), \dots,    \\
-                 & \left(\sum^{{m_1}/{n_2} - 1}_{i=0}d_1(\mathbf{x})_{i \cdot n_2 + n_2}\right)  \Biggr)
-    \end{aligned}
-  \end{align*}
+  \begin{prooftree}
+    \AxiomC{$\begin{array}{l}
+          \SigP{d_1}(s_1, \dots, s_{i_1}) = (x_1, \dots, x_{o_1}) \\
+          \forall j \in \{1, \dots, i_2\} y_j = \sum^{k -1}_{l=0} x_{j + k * i_2}
+        \end{array}$}
+    \UnaryInfC{$\SigP{\Merge(d_1, d_2)}(s_1, \dots, s_{i_1}) ={} \SigP{d_2}(y_1, \dots, y_{i_2})$}
+  \end{prooftree}
 \end{minipage}
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
@@ -289,23 +294,3 @@ $\Sequential(d_1, d_2)$ when $k = 1$.
 \subsubsection{Ref}
 \subsubsection{Ref}
 
-\section{C++ Implementation}
-
-When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to
-separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented
-for the AST, such as a basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a
-visual representation of the AST, like fausts block diagram generator.
-
-The AST is represented by nodes that satisfy the concept \concept{ABlock}, which just requires a block
-\cpp{T} to inherit from \cpp{BlockBase<T, T::in_channels, T::out_channels>}. \cpp{BlockBase} is a CRTP
-\footnote{Curriously Recurring Template Pattern, see \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}} base class, and provides \cpp{T::in_channels}, \cpp{T::out_channels}, and the
-function call operator overload required for currying.
-
-\subsection{\cpp{BlockBase} and \cpp{ABlock}}
-\subsection{Literals}
-\subsection{Currying}
-\subsection{Repeat}
-\subsection{Operator overloads and shorthand syntax}
-
-\subsection{\cpp{evaluator}}
-For simplicity, I assume \cpp{float} for all signals. \subsection{\cpp{Frame}}

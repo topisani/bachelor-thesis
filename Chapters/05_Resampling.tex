@@ -154,8 +154,23 @@ $\Resample\left<N\right>(d)$ block is introduced, which can be used to perform o
 $d$.
 
 \begin{prooftree}
-  \AxiomC{$d : \Sig^{n} \rightarrow \Sig^m$}
-  \UnaryInfC{$\Resample\langle N\rangle(d) : \Sig^n \rightarrow \Sig^m$}
+  \AxiomC{$d : i \rightarrow o$}
+  \AxiomC{$F_i : i \rightarrow i$}
+  \AxiomC{$F_d : o \rightarrow o$}
+  \AxiomC{$N \in \mathbb{N}^+$}
+  \QuaternaryInfC{$\Resample\langle N\rangle(d, F_i, F_d) : i \rightarrow o$}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{$\begin{array}{l}
+  u_j(t) = \begin{cases}
+    s_j\left(\frac t N\right) & \exists k \in \mathbb N : t = N \cdot k \\
+    0 & \textrm{otherwise}
+    \end{cases} \\
+  \SigP{\Sequential(\Sequential(F_i, d), F_d)}(u_1, \dots, u_i) = (v_1, \dots, v_o) \\
+  y_j(t) = v_j(t \cdot N)
+  \end{array}$}
+  \UnaryInfC{$\SigP{\Resample\langle N\rangle(d, F_i, F_d)}(s_1, \dots, s_i) = (y_1, \dots, y_o)$}
 \end{prooftree}
 
 \begin{figure}[H]

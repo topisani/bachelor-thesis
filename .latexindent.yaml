@@ -62,11 +62,16 @@ verbatimEnvironments:
     verbatim: 1
     lstlisting: 1
     minted: 1
+    cppcode: 1
+    cppcode*: 1
+    cppcodenl: 1
+    cppcodenl*: 1
 
 #  verbatim commands such as \verb! body !, \lstinline$something else$
 verbatimCommands:
     verb: 1
     lstinline: 1
+    cpp: 1
 
 #  no indent blocks (not necessarily verbatim 
 #  environments) which are marked as %\begin{noindent}

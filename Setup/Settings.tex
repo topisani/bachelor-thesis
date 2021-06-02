@@ -78,12 +78,48 @@
   %hidelinks,                        % Do not show boxes or coloured links.
 }
 
+\usemintedstyle{friendly}
+\setminted[]{
+  breaklines,
+  autogobble,
+  frame=leftline,
+  framerule=2pt,
+  framesep=5pt,
+  rulecolor=\color{aublue},
+  numbersep=5pt,
+  baselinestretch=1,
+  %bgcolor=LightGray,
+  fontsize=\footnotesize,
+  linenos
+}
+
+\newminted[cppcode]{cpp}{}
+\newminted[cppcodenl]{cpp}{linenos=false}
+%\newenvironment{cppcode}{\VerbatimEnvironment\begin{cppcodeimpl}}{\end{cppcodeimpl}}
+
+\newmintinline{cpp}{}
+% Inline C++
+\newcommand{\cpp}[1]{\cppinline{#1}}
+
 \captionsetup[lstlisting]{font={scriptsize}}
+\captionsetup[listing]{font={scriptsize}}
+\newcommand{\concept}[1]{\textbf{\cpp{#1}}}
 \usepackage[scaled=.95]{inconsolata}
+
+\lstdefinelanguage{faust}{
+  language=C++,
+  keywords={component, declare, environment, import, library, process},
+  emph={[2]ffunction, fconstant, fvariable},
+  emph={[3]button, checkbox, vslider, hslider, nentry, vgroup, hgroup, tgroup, vbargraph, hbargraph, attach},
+}
+
+\lstdefinelanguage{cpp}[]{C++}{
+  morekeywords={constexpr, noexcept, requires}
+}
 
 % Listings setup
 \lstset{
-  language=C++,
+  language=cpp,
   basicstyle=\footnotesize\ttfamily,% the size of the fonts that are used for the code
   commentstyle=\color{green},	    % comment style
   keywordstyle=\bfseries\ttfamily\color{aublue}, % keyword style
@@ -113,17 +149,6 @@
   floatplacement=htb,
   float,
 }
-
-\lstdefinelanguage{faust}{
-  language=C++,
-  keywords={component, declare, environment, import, library, process},
-  emph={[2]ffunction, fconstant, fvariable},
-  emph={[3]button, checkbox, vslider, hslider, nentry, vgroup, hgroup, tgroup, vbargraph, hbargraph, attach},
-}
-
-% Inline C++
-\newcommand{\cpp}[1]{\lstinline[language=c++]{#1}}
-\newcommand{\concept}[1]{\ensuremath{\textsc{#1}}}
 
 % Signature field
 \newlength{\myl}
