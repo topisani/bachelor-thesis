@@ -33,7 +33,7 @@ Firstly, even with the \emph{architecture} system, interoperability is between f
 host code is still hard, especially when embedding in a larger system. Faust is fairly simple in terms of
 interop, and the architectures are defined in terms of functions describing user interfaces, which are
 awkward to use when the DSP is separated from the UI. For example, to add a volume input parameter to a faust
-program, one would use either the \lstinline{vslider} or \lstinline{hslider} functions, which represent the UI elements
+program, one would use either the \cpp{vslider} or \cpp{hslider} functions, which represent the UI elements
 vertical and horizontal slider respectively. These functions also take a default value, minimum value,
 maximum value and step size, which are all options better suited for a separate UI implementation, especially
 when these options are not controlled directly by UI elements, but instead by some surrounding application

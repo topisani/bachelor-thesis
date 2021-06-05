@@ -1,9 +1,11 @@
 \chapter{Multirate DSP Algorithms}
+\label{chap:multirate}
 
-As an example of the advantages of working directly in C++, this chapter explores resampling, and working
-with a signal path that uses multiple sample rates. I Will cover why this can be very important in certain
-classes of DSP algorithms, how the transformations between sample rates is done, and how I have implemented
-it in the EDA library.
+This chapter explores resampling, and working with a signal path that uses multiple sample rates. Multirate
+DSP is not supported by FAUST\autocite{faustwebsite}, and this chapter will cover why this can be very
+important in certain classes of DSP algorithms, how the transformations between sample rates is done, and how
+I have implemented it in the EDA library. This is all intended as an example of some advantages of working
+with a C++ library compared to a DSL.
 
 \section{Aliasing}
 
@@ -86,6 +88,7 @@ specific knowledge of the nonlinear operation that is being used, and oversampli
 the standard method for alias reduction\autocite{kahles2019oversampling, deman2014}.
 
 \subsection{Interpolation}
+\label{sec:interpolation}
 
 I will briefly introduce the most common method of increasing the sample rate of a sampled signal, in which
 the signal is first zero-stuffed and then interpolated using a filter. Like with alias reduction, this is an
@@ -115,6 +118,7 @@ pass filter to remove them.
 \end{figure}
 
 \subsection{FIR Filters}
+\label{sec:fir_filters}
 
 There are a lot of methods to designing and implementing interpolation filters for the best and most
 efficient results, but most of them are based on Finite Impulse Response (FIR) filters. A FIR filter of order
@@ -127,6 +131,7 @@ ensure a very steep cutoff, but in real use there is a tradeoff between the effi
 order, and the better results of a harder cutoff point.
 
 \subsection{Decimation}
+\label{sec:decimation}
 
 When downsampling, we first need to remove any frequencies above the Nyquist limit of the resulting sample
 rate, since those will otherwise be aliased, which was the original reason for oversampling. This process is
@@ -138,11 +143,13 @@ required, which means some computations can be skipped in the FIR filter. These 
 the referenced sources of this chapter, such as \autocite{kahles2019oversampling, SORIA2013, thomas2009}.
 
 \section{Multirate in the Algebra of Blocks}
+\label{sec:multirate_blocks}
 
 Now that we know why resampling is important, and the basics of how it is implemented, I will look at how to
 integrate it in the block algebra introduced in \autoref{chap:blocks}.
 
 \subsection{Approach I}
+\label{sec:multirate_blocks_1}
 In the most general model, multirate blocks are introduced by adding an extra parameter
 $R$ to signals, as the ratio of the sample rates $f_{out}/f_{in}$. This means blocks
 will be defined with the types $i \rightarrow_R o$, and block compositions need type rules to compute the
@@ -167,6 +174,7 @@ that downsample can only output after receiving $\frac 1 R$ samples, and blocks 
 output $R$ samples at a time.
 
 \subsection{Approach II}
+\label{sec:multirate_blocks_2}
 
 Instead, a simpler approach is chosen, where all blocks have the same input/output rate, but a separate
 $\Resample\left<N\right>(d, F_i, F_d)$ block is introduced, which can be used to perform oversampling for the block
@@ -209,11 +217,19 @@ in the cases where it is needed, it can easilly be done outside of the component
 diagram.
 
 \section{Multirate in the EDA Library}
+\label{sec:multirate_eda}
+
+As with most of the constructs described in \autoref{chap:cpp_lib}, translating the resampling block to C++
+for the EDA library is a fairly straight forward process. \Resample is a compositional block, so it inherits
+from \cpp{CompositionBase}. In the implementation shown here, the filters are just sequentially composed
+around the inner block in the construction function, but in an optimized implementation custom filters would
+be used, with optimizations such as not invoking the decimation filter on the samples that are discarded
+during downsampling (see \autoref{sec:decimation}).
 
 \begin{cppcodenl}
   template<int N, AnyBlock Block>
   requires(N > 1)
-  struct Resample : CompositionBase<Resample<N, Block>, 1, 1, Block> {};
+  struct Resample : CompositionBase<Resample<N, Block>, ins<Block>, outs<Block>, Block> {};
 
   template<int N>
   constexpr auto resample(AnyBlock auto block, AnyBlock auto f1, AnyBlock auto f2)
@@ -223,7 +239,9 @@ diagram.
   }
 \end{cppcodenl}
 
-\begin{cppcodenl}
+The evaluator is where the interesting parts recide:
+
+\begin{cppcode}
   template<int N, AnyBlock Block>
   struct evaluator<Resample<N, Block>> : EvaluatorBase<Resample<N, Block>> {
     constexpr evaluator(const Resample<N, Block>& resample) noexcept 
@@ -232,15 +250,109 @@ diagram.
 
     constexpr Frame<outs<Block>> eval(Frame<ins<Block>> in)
     {
-      // Zero stuffing reduces amplitude by N
+      auto& e = std::get<0>(this->operands);
       for (float& f : in) {
         f *= N;
       }
-      Frame<outs<Block>> res = std::get<0>(this->operands).eval(in);
+      Frame<outs<Block>> res = e.eval(in);
       for (int i = 1; i < N; i++) {
-        std::get<0>(this->operands).eval({});
+        e.eval({});
       }
-      return res;
+      return res; }
+  };
+\end{cppcode}
+
+\begin{itemize}
+  \item \textit{Line 10-12}: The gain is increased to compensate for the loss during interpolation (see
+        \autoref{sec:interpolation})
+  \item \textit{Line 13}: The block is evaluated on the input data.
+  \item \textit{Line 14-16}: The block is evaluated $N - 1$ times with all-zero inputs.
+  \item \textit{Line 17}: The result of the first evaluation is returned.
+\end{itemize}
+
+Since the block here already contains the interpolation/decimation filters, these operations constitute
+oversampling.
+
+\subsection{FIR filters in EDA}
+
+While Finite Impulse Response filters (as introduced in \autoref{sec:fir_filters}) are used for many other
+purposes than rate conversions, the implementation is included in this chapter for context.  Given filter
+kernel $(b_0, b_n)$, the block $\Block{fir}(b_0, \dots, b_n) : 1 \rightarrow 1$ is a primitive block implemented as such:
+
+\begin{cppcodenl}
+  template<std::size_t N>
+  struct FIRFilter : BlockBase<FIRFilter<N>, 1, 1> {
+    std::array<float, N> kernel;
+  };
+
+  template<std::size_t N>
+  constexpr auto fir(std::array<float, N> kernel) noexcept
+  {
+    return FIRFilter<N>{.kernel = kernel};
+  }
+\end{cppcodenl}
+
+I will not go into detail on the implementation, but it is shown here mainly to illustrate that except for
+the EDA-speciffic structure of the classes, the filter is implemented in normal C++, similar to how a
+point-wise evaluated FIR filter would usually be implemented, with a \cpp{std::array} used as a
+ringbuffer, the kernel stored in two consecutive copies, and the meat of the evaluation being done with
+\cpp{std::inner_product}\footnote{see \url{https://en.cppreference.com/w/cpp/algorithm/inner_product}}:
+
+\begin{cppcodenl}
+  template<std::size_t N>
+  struct evaluator<FIRFilter<N>> : EvaluatorBase<FIRFilter<N>> {
+    constexpr evaluator(const FIRFilter<N>& fir) noexcept
+    {
+      std::ranges::copy(fir.kernel, kernel.begin());
+      std::ranges::copy(fir.kernel, kernel.begin() + N);
     }
+    constexpr Frame<1> eval(Frame<1> in)
+    {
+      if (t == N) t = 0;
+      t++;
+      z[N - t] = in;
+      auto start = kernel.begin() + t;
+      return std::inner_product(start, start + N, z.begin(), 0.f);
+    }
+  private:
+    std::size_t t = 0;
+    std::array<float, N> z = {0};
+    std::array<float, 2 * N> kernel;
   };
 \end{cppcodenl}
+
+This implementation shows that it is possible to implement DSP algorithms in "normal" C++, which allows for
+hand-written optimizations and complex state, and still have them completely transparently available as a
+block in an EDA context.
+
+\subsection{Example}
+
+To demonstrate oversampling in EDA, the $\tanh(5x)$ example used throughout this chapter is
+implemented in EDA as such:
+
+\begin{cppcodenl}
+auto quarterpass = fir(qp_coefficients);
+auto tanh = fun<1, 1>(&std::ftanh);
+auto saturation = resample<4>(_ * 5 | tanh, quarterpass, quarterpass);
+\end{cppcodenl}
+
+In fact, variations on this implementation is what was used to generate \autoref{fig:interpolation} and
+\autoref{fig:resampled_tanh}.
+
+The coefficients for the filter can be seen in \todo{appendix ??}.
+
+\section{Conclusion}
+
+This chapter has covered the motivation and methods behind multirate DSP, with a focus on oversampling. By
+implementing this feature in the algebra of blocks, and then in the EDA library in roughly 30 lines of code,
+I have given an example of the merits of a domain specific library in a general-purpose language compared to
+a domain specific language, and specifically the versatility allowed by the design choices made in this
+project. To help support this argument, an implementation of a FIR filter was shown, illustrating how
+complicated primitive blocks can be implemented in vanilla C++ by the user of the library, instead of having
+to rewrite the problem in terms of recursion and other basic compositional blocks.
+
+In \autoref{sec:multirate_blocks}, two possible solutions for multirate DSP were introduced, and while the second
+was selected here, the first also has potential, and while the implementation would be more involved, it
+enables operations that are not supported by the chosen design, by allowing blocks to output at a different
+sample rate than their input. Potential further work in this area includes exploring possible implementations
+of that design, and especially how it would integrate with work on vectorization and buffer-wise evaluation.

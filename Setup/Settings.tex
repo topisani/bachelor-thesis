@@ -79,6 +79,7 @@
   %hidelinks,                        % Do not show boxes or coloured links.
 }
 
+\definecolor{mintedbg}{rgb}{0.95, 0.95, 0.95}
 \usemintedstyle{friendly}
 \setminted[]{
   breaklines,
@@ -89,10 +90,29 @@
   rulecolor=\color{aublue},
   numbersep=5pt,
   baselinestretch=1,
-  %bgcolor=LightGray,
   fontsize=\footnotesize,
+  % bgcolor=mintedbg,
   linenos
 }
+
+%%%%%%%%%%%%%%
+% Minted inline background
+
+\setmintedinline[]{
+  bgcolor=mintedbg
+}
+
+\newlength{\mintedfboxsep}
+\setlength{\mintedfboxsep}{1.5pt}
+
+\xpatchcmd{\minted@inputpyg@inline}{%
+  \colorbox%
+}{%
+  \fboxsep\mintedfboxsep%
+  \colorbox%
+}{\typeout{Success}}{\typeout{Failure}}
+
+%%%%%%%%%%%%%%%%
 
 \newminted[cppcodeimpl]{cpp}{}
 \newenvironment{cppcode}{\VerbatimEnvironment\begin{cppcodeimpl}}{\end{cppcodeimpl}}

@@ -1,4 +1,5 @@
 \chapter{The C++ Library}
+\label{chap:cpp_lib}
 
 % When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to
 % separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented
@@ -58,16 +59,6 @@ blocks can be copied around.
   template<typename T, std::size_t I, std::size_t O>
   concept ABlock = AnyBlock<T> &&(T::in_channels == I) && (T::out_channels == O);
 \end{cppcodenl}
-
-The \concept{ABlock} concept is especially useful when used as a placeholder type for declaring block
-diagrams:
-
-\todo{EDA Syntax has not been introduced yet, move this to later?}
-\begin{cppcodenl}
-  ABlock<1, 2> auto d = (_ << (_ + _, _ * _));
-\end{cppcodenl}
-
-Here the \cpp{ABlock<1, 2>} prefix becomes a checked annotation that \cpp{d} is a block with signature $1 \rightarrow 2$.
 
 \subsubsection{\cpp{ins<T>} and \cpp{outs<T>}}
 
@@ -263,7 +254,8 @@ introduce scalar values into the block diagram. \cpp{Literal} is used for consta
 over time, i.e. non-signal values used to control parameters of the signal processor. This is a problem that
 faust solves using functions that model UI elements, such as \cpp{vslider(name, ...)}\autocite{orlarey2004}
 
-As a shorthand for \cpp{lit(0.5)}, the user-defined literal \cpp{0.5_eda} is also provided:
+As a shorthand for \cpp{lit(0.5)}, the user-defined literal\footnote{see \url{https://en.cppreference.com/w/cpp/language/user_literal}} \cpp{0.5_eda} is also
+provided:
 \begin{cppcodenl}
   constexpr Literal operator"" _eda(long double f) noexcept
   {
@@ -613,11 +605,11 @@ the implementation details here, but the code can be seen in \todo{appendix ??}.
 
 A simple, but important enhancement to the library, is the \cpp{fun<I, O>(Callable)} block. It can be used to
 easily wrap normal C++ functions to stateless blocks. As an example, the following defines blocks for the
-hyperbolic tangent function (as used in \autoref{chap:multirate}), and the modulo operation.
+hyperbolic tangent function (as used in \autoref{chap:multirate}), and floating point modulo.
 
 \begin{cppcodenl}
-  constexpr auto tanh = fun<1, 1>(&::tanhf);
-  constexpr auto mod = fun<2, 1>([](auto in) { return std::fmod(in[0], in[1]); });
+  auto tanh = fun<1, 1>(&std::tanhf);
+  auto mod = fun<2, 1>([](auto in) { return std::fmod(in[0], in[1]); });
 \end{cppcodenl}
 
 The \cpp{fun} block simply captures the function, and the evaluator delegates to it directly.
@@ -627,28 +619,42 @@ A stateful version of \cpp{fun} also exists, which can store arbitrary state in 
 into new objects on each evaluator construction, and the evaluator passes references to these objects as
 extra arguments to \cpp{f(data, states...)}.
 
-\subsection{Partial function application}
-\label{sec:eda_partial_application}
+As an example, the following $\Block{counter} : 0 \rightarrow 1$ block outputs the signal $s(t) = t$, by
+keeping a state of type \cpp{int}, initialized to $0$, and incrementing it
+each time the evaluator is called:
+
 \begin{cppcodenl}
-  template<AnyBlock Block, AnyBlock... Inputs>
-  requires((outs<Inputs> <= ins<Block>) &&...) //
-  struct Partial : BlockBase<Partial<Block, Inputs...>, ins<Block> + (ins<Inputs> + ...) - (outs<Inputs> + ...), outs<Block>> 
-  {
-    constexpr Partial(Block b, Inputs... input) noexcept : block(b), inputs(input...) {}
+  auto counter = fun<0, 1>([](Frame<0> in, int& state) { state++; return {state}}, 0);
+\end{cppcodenl}
 
-    Block block;
-    std::tuple<Inputs...> inputs;
-  };
+By using these constructs, most simple blocks, stateful or stateless, can be implemented without having to
+write out the type and evaluator declarations.
 
+\subsection{Function call syntax for blocks}
+\label{sec:eda_partial_application}
+
+FAUST has the ability to call blocks as functions, meaning $d(x_1, \dots, x_{\Ins(d)})$ is equal to
+$\Sequential(\Parallel(x_1, \dots, x_{\Ins(d)}), d)$. To make this even more useful, partial application is supported, i.e.
+% 
+\begin{align*}
+  d(x_1, \dots, x_n)      & ={} \Sequential(\Parallel(x_1, \dots, x_n, \Ident^{\Ins(d) - \sum^n_{i=1} \Outs(x_i)}), d) \\
+  \sum^n_{i=1} \Outs(x_i) & \leq \Ins(d)
+\end{align*}
+
+This description can be translated directly to an implementation of the function call operator on
+\cpp{BlockBase}, making it available to all blocks:
+
+\begin{cppcodenl}
   template<typename D, std::size_t I, std::size_t O>
-  constexpr auto BlockBase<D, I, O>::operator()(auto&&... inputs) const noexcept //
-  requires(sizeof...(inputs) <= I)
+  constexpr auto BlockBase<D, I, O>::operator()(auto&&... inputs) const noexcept
+  requires((outs<Inputs> + ...) <= I)
   {
-    return Partial<D, as_block_t<decltype(inputs)>...>(static_cast<const D&>(*this), as_block(FWD(inputs))...);
+    return seq(par(inputs..., ident<I - (outs<Inputs> + ...)>), *this);
   }
 \end{cppcodenl}
 
 \subsection{Repeat}
+\todo{Explain or remove}
 \begin{cppcodenl}
   template<std::size_t N>
   constexpr auto repeat(AnyBlock auto const& block, auto&& composition) 
@@ -705,3 +711,11 @@ include/eda/block.hpp:178:12: note: because 'outs<eda::Parallel<eda::Ident<1>, e
 \end{minted}
 
 \todo{Say something about this?}
+
+When declaring blocks, it can be useful to use the \concept{ABlock} concept as a placeholder type:
+
+\begin{cppcodenl}
+  ABlock<1, 2> auto d = (_ << (_ + _, _ * _));
+\end{cppcodenl}
+
+Here the \cpp{ABlock<1, 2>} prefix becomes a checked annotation that \cpp{d} is a block with signature $1 \rightarrow 2$.
