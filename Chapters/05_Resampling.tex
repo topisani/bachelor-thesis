@@ -13,8 +13,9 @@ the Nyquist limit. Intuitively, this is because no change in the waveform can be
 two samples.
 
 The frequencies above the Nyquist limit don't just disappear from the sampled signal though, but will instead
-be mirrored back and fourth between the Nyquist frequency and $f = 0$. This behaviour is called
-aliasing, and is undesirable in most usecases, since it distorts the signal with non-harmonic frequencies.
+be mirrored back and fourth between the Nyquist frequency and $f = 0$. This behaviour is
+called aliasing, and is undesirable in most usecases, since it distorts the signal with non-harmonic
+frequencies.
 
 When initially sampling an analogue signal, the main way to avoid aliasing is simply to use an analogue
 low-pass filter to remove any frequencies above the Nyquist limit before the signal is sampled to discrete
@@ -143,15 +144,37 @@ integrate it in the block algebra introduced in \autoref{chap:blocks}.
 
 \subsection{Approach I}
 In the most general model, multirate blocks are introduced by adding an extra parameter
-$R$ to blocks, which is the ratio of the sample rates $f_{out}/f_{in}$.
+$R$ to signals, as the ratio of the sample rates $f_{out}/f_{in}$. This means blocks
+will be defined with the types $i \rightarrow_R o$, and block compositions need type rules to compute the
+rate ratio as well. As an example, here is the type rule as it would be stated for \Sequential:
 
-\todo{Describe this approach}
+\begin{prooftree}
+  \AxiomC{$d_1 : n \rightarrow_{r} p$}
+  \AxiomC{$d_2 : p \rightarrow_{q} m$}
+  \BinaryInfC{$\Sequential(d_1, d_2) : i_1 \rightarrow_{r \cdot q} o_2$}
+\end{prooftree}
+
+This means the rate ratio of $\Sequential(d_1, d_2)$ is the product of the rate ratios of
+$d_1$ and $d_2$. Similarly, $\Parallel(d_1, d_2)$ requires both operands
+to have the same rate ratio, which becomes the rate ratio of the compositio n. One would then introduce
+$\Block{upsample}(n) : 1 \rightarrow_n 1$ and $\Block{downsample} : 1 \rightarrow_{\frac 1
+    n} 1$ blocks, which could be used to change the sample rate.
+
+This model has the advantage of allowing other uses for resampling, such as interfacing between two systems
+that use different sample rates, as a top-level signal processor can have different input/output sample
+rates. However, it introduces a large amount of complexity to evaluating the signal processors, since blocks
+that downsample can only output after receiving $\frac 1 R$ samples, and blocks that upsample
+output $R$ samples at a time.
 
 \subsection{Approach II}
 
 Instead, a simpler approach is chosen, where all blocks have the same input/output rate, but a separate
-$\Resample\left<N\right>(d)$ block is introduced, which can be used to perform over/undersampling for the block
-$d$.
+$\Resample\left<N\right>(d, F_i, F_d)$ block is introduced, which can be used to perform oversampling for the block
+$d$, with ratio $N$, interpolation filter $F_i$, and
+decimation filter $F_d$. This means, that while $d$ is evaluated at a
+higher sample rate, the full $\Resample$ block outputs at the same sample rate as its input. This
+block can be seen in \autoref{fig:block_resample}, and the type rules and signal processesor of it are described
+here:
 
 \begin{prooftree}
   \AxiomC{$d : i \rightarrow o$}
@@ -163,21 +186,61 @@ $d$.
 
 \begin{prooftree}
   \AxiomC{$\begin{array}{l}
-  u_j(t) = \begin{cases}
-    s_j\left(\frac t N\right) & \exists k \in \mathbb N : t = N \cdot k \\
-    0 & \textrm{otherwise}
-    \end{cases} \\
-  \SigP{\Sequential(\Sequential(F_i, d), F_d)}(u_1, \dots, u_i) = (v_1, \dots, v_o) \\
-  y_j(t) = v_j(t \cdot N)
-  \end{array}$}
+        u_j(t) = \begin{cases}
+          s_j\left(\frac t N\right) & \exists k \in \mathbb N : t = N \cdot k \\
+          0                         & \textrm{otherwise}
+        \end{cases}                                                \\
+        \SigP{\Sequential(\Sequential(F_i, d), F_d)}(u_1, \dots, u_i) = (v_1, \dots, v_o) \\
+        y_j(t) = v_j(t \cdot N)
+      \end{array}$}
   \UnaryInfC{$\SigP{\Resample\langle N\rangle(d, F_i, F_d)}(s_1, \dots, s_i) = (y_1, \dots, y_o)$}
 \end{prooftree}
 
-\begin{figure}[H]
+\begin{figure}
   \centering
   \label{fig:block_resample}
   \includestandalone[]{Pictures/block_resample}
   \caption{The resample block as implemented in the EDA library}
 \end{figure}
 
+While this approach does not allow a signal processor to output at a different rate than its input, it still
+covers most relevant usecases. Actual sample-rate conversion is usually done at the edge of the system, and
+in the cases where it is needed, it can easilly be done outside of the component described as a block
+diagram.
+
 \section{Multirate in the EDA Library}
+
+\begin{cppcodenl}
+  template<int N, AnyBlock Block>
+  requires(N > 1)
+  struct Resample : CompositionBase<Resample<N, Block>, 1, 1, Block> {};
+
+  template<int N>
+  constexpr auto resample(AnyBlock auto block, AnyBlock auto f1, AnyBlock auto f2)
+  {
+    auto filter_block = seq(f1, block, f2);
+    return Resample<N, decltype(filter_block)>{{filter_block}};
+  }
+\end{cppcodenl}
+
+\begin{cppcodenl}
+  template<int N, AnyBlock Block>
+  struct evaluator<Resample<N, Block>> : EvaluatorBase<Resample<N, Block>> {
+    constexpr evaluator(const Resample<N, Block>& resample) noexcept 
+      : EvaluatorBase<Resample<N, Block>>(resample) 
+    {}
+
+    constexpr Frame<outs<Block>> eval(Frame<ins<Block>> in)
+    {
+      // Zero stuffing reduces amplitude by N
+      for (float& f : in) {
+        f *= N;
+      }
+      Frame<outs<Block>> res = std::get<0>(this->operands).eval(in);
+      for (int i = 1; i < N; i++) {
+        std::get<0>(this->operands).eval({});
+      }
+      return res;
+    }
+  };
+\end{cppcodenl}

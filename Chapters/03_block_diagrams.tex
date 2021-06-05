@@ -1,11 +1,14 @@
-\newcommand{\Ident}{\ensuremath{\textrm{ident}}\xspace}
-\newcommand{\Cut}{\ensuremath{\textrm{cut}}\xspace}
-\newcommand{\Sequential}{\ensuremath{\textrm{seq}}\xspace}
-\newcommand{\Parallel}{\ensuremath{\textrm{par}}\xspace}
-\newcommand{\Recursive}{\ensuremath{\textrm{rec}}\xspace}
-\newcommand{\Resample}{\ensuremath{\textrm{resample}}\xspace}
-\newcommand{\Split}{\ensuremath{\textrm{split}}\xspace}
-\newcommand{\Merge}{\ensuremath{\textrm{merge}}\xspace}
+\newcommand{\Block}[1]{\ensuremath{\textsc{#1}}\xspace}
+\newcommand{\Ident}{\Block{ident}}
+\newcommand{\Cut}{\Block{cut}}
+\newcommand{\Sequential}{\Block{seq}}
+\newcommand{\Parallel}{\Block{par}}
+\newcommand{\Recursive}{\Block{rec}}
+\newcommand{\Resample}{\Block{resample}}
+\newcommand{\Split}{\Block{split}}
+\newcommand{\Merge}{\Block{merge}}
+\newcommand{\Mem}{\Block{mem}}
+\newcommand{\Delay}{\Block{delay}}
 \newcommand{\Ins}{\ensuremath{\textbf{ins}}\xspace}
 \newcommand{\Outs}{\ensuremath{\textbf{outs}}\xspace}
 \newcommand{\Sig}{\ensuremath{\mathbb{S}}\xspace}
@@ -20,8 +23,8 @@
 
 \section{Algebra of Blocks}
 
-In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five basic
-block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
+In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
+basic block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
 operations, split and merge. The rest of this chapter introduces this algebra of blocks in a language very
 similar to \autocite{orlarey2004}, with minor differences in syntax and semantics noted along the way.
 
@@ -77,25 +80,6 @@ Each of these seven block operations is described in detail by the FAUST authors
 and \autocite{orlarey2004}, so here I will only give a brief introduction to each one, along with an example
 illustration and the type rules. Some are slightly simplified here when possible to still get the same
 expressivity, in those cases it will be noted.
-
-\begin{table}[]
-  \centering
-  \begin{tabular}{|l|c|c|c|c|}
-    \hline
-    $d$                     & Faust Syntax                    & EDA Syntax               & $\Ins(d)$                 & $\Outs(d)$ \\
-    \hline\hline
-    \Ident                  & \cpp{_}        & \cpp{_}        & 1                        & 1                                      \\
-    \Cut                    & \cpp{!}        & \cpp{cut}      & 1                        & 0                                      \\
-    $\Sequential(d_1, d_2)$ & \cpp{d1 : d2}  & \cpp{d1 | d2}  & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
-    $\Parallel(d_1, d_2)$   & \cpp{d1 , d2}  & \cpp{d1 , d2}  & $\Ins(d_1) + \Ins(d_2)$  & $\Outs(d_1) + \Outs(d_2)$              \\
-    $\Recursive(d_1, d_2)$  & \cpp{d1 ~ d2}  & \cpp{d1 \% d2} & $\Ins(d_1) - \Outs(d_2)$ & $\Outs(d_1)$                           \\
-    $\Split(d_1, d_2)$      & \cpp{d1 <: d2} & \cpp{d1 << d2} & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
-    $\Merge(d_1, d_2)$      & \cpp{d1 :> d2} & \cpp{d1 >> d2} & $\Ins(d_1)$              & $\Outs(d_2)$                           \\
-    \hline
-  \end{tabular}
-  \caption{Basic block diagram compontents and their properties and syntax}
-  \label{tab:blocks}
-\end{table}
 
 \subsubsection{Identity}
 The $\Ident$ block is the simplest block - it simply takes one input signal, and outputs that
@@ -288,9 +272,82 @@ $\Sequential(d_1, d_2)$ when $k = 1$.
 
 \subsection{Domain Specific Blocks}
 
-\subsubsection{Arithmetic}
-\subsubsection{Memory}
-\subsubsection{Delay}
-\subsubsection{Ref}
-\subsubsection{Ref}
+As mentioned in the beginning of this chapter, the full set of blocks includes some domain-specific
+primitives, denoted by the set $\mathbb B$. These are the blocks that perform actual useful
+operations on the signals, and the blocks defined until now, are used to compose the primitives in
+$\mathbb B$ into block diagrams.
 
+This set can be extended with many more operations, but some of the most important ones are covered here.
+Faust itself includes quite a few more\autocite{orlarey2004}, such as comparisons, branching, and UI
+elements. During the following chapters more will be defined as well, and adding additional blocks should be
+easy with the information given here.
+
+\subsubsection{Arithmetic}
+\label{sec:block_arithmetic}
+The most basic blocks perform arithmetic operations on pairs of signals. For all operators
+$@$ in ${+, -, *, /}$, a block with the following properties is defined:
+
+\begin{minipage}{0.5\linewidth}
+  \begin{align*}
+    @                     & : 2 \rightarrow 1 \\
+    \SigP{@}(s_1, s_2)(t) & = s_1(t) @ s_2(t) \\
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_merge}
+    \includestandalone[]{Pictures/block_plus}
+  \end{figure}
+\end{minipage}
+
+Keep in mind that these blocks are primitive, and while FAUST as well as EDA use infix operator syntax for
+them, they are not compositional operators, meaning the block itself is not parameterized.
+
+\subsubsection{Memory}
+
+DSP operations commonly depend on previous signal values, and while the recursive composition often covers
+those usecases, some are better suited with a simple memory block. It takes one input signal, and outputs
+that same signal delayed by a single sample, and the very first sample has the value zero:
+
+\begin{minipage}{0.5\linewidth}
+  \begin{align*}
+    \Mem               & : 1 \rightarrow 1           \\
+    \SigP{@}(s)(0) = 0 & , \SigP{@}(s)(t + 1) = s(t) \\
+  \end{align*}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+  \begin{figure}[H]
+    \centering
+    \label{fig:block_merge}
+    \includestandalone[]{Pictures/block_mem}
+  \end{figure}
+\end{minipage}
+
+Memory blocks are often chained by sequential composition for longer delays, and this is denoted
+$\Mem^n$. The corresponding signal processor becomes
+
+\[
+  \SigP{\Mem^n}(s)(t) =
+  \begin{cases}
+    s(t - n) & \text{if } t \geq n \\
+    0        & \text{otherwise}
+  \end{cases}
+\]
+
+\subsubsection{Delay}
+
+By composing memory blocks, one can get a delay of arbitrary length, however, sometimes this length needs to
+vary at runtime. For this, we have the \Delay block. Given two signals $(d, s)$, this block
+outputs $s$ delayed by $d(t)$ samples.
+
+\begin{align*}
+  \Delay                 & : 2 \rightarrow 1            \\
+  \SigP{\Delay}(d, s)(t) & = \begin{cases}
+    s(t - d(t)) & \text{if } t \geq d \\
+    0           & \text{otherwise}
+  \end{cases}
+\end{align*}
+
+In implementations of this block, there may need to be some constraint on the value of
+$d(t)$, and/or some buffer-growth policy that results in slightly different semantics.

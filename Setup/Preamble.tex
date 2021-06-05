@@ -1,5 +1,6 @@
 \usepackage{microtype}      % better looking text
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 %\usepackage{fontspec}       % Package for custom fonts
 %\usepackage{a4}
 \usepackage[left=2cm,right=2cm,top=3cm,bottom=3cm]{geometry}     % Package for changing page margins (before fancyhdr) 
@@ -12,8 +13,8 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{siunitx}        % SI units
-\usepackage{listings}       % Package for inserting code, (before cleveref)
-\usepackage{minted}
+\usepackage[cache]{minted}
+\usepackage{fvextra}
 \PassOptionsToPackage{hyphens}{url} % Ability to line break urls at hyphens
 \usepackage[colorlinks=true]{hyperref}
 \usepackage{cleveref}       % improved cross referencing
@@ -21,22 +22,16 @@
 \usepackage[english]{babel} % localisation 
 \usepackage{caption}        % better captions
 \usepackage{subcaption}     % for subfigures
-\usepackage{csquotes}       % For biblatex with babel
-\usepackage[backend=biber,style=numeric,sorting=none]{biblatex} % Package for bibliography (citing)
-\bibliography{bibliography.bib}
-\addbibresource{wg21.bib}
 \usepackage{tabularx}       % for ability to adjust column spacing in tabular better
 \usepackage{booktabs}       % for better tables
 \usepackage{float}          % floating figures in correct places
 \usepackage{calc}           % Adds ability for latex to calculate (3pt+2pt) 
 \usepackage{xintexpr}
 \usepackage{epsfig}
-\usepackage[T1]{fontenc}
 \usepackage{mathptmx}
 \usepackage{color}
 \usepackage{epstopdf}
 \usepackage{svg}
-\usepackage{microtype}
 \usepackage[useregional]{datetime2}
 \usepackage{verbatim}
 \usepackage{standalone}
@@ -47,6 +42,12 @@
 \usepackage{pdfrender}
 \DTMlangsetup[en-US]{showdayofmonth=false}
 \usepackage{xspace}
+\usepackage{cprotect}
+
+\usepackage{csquotes}       % For biblatex with babel
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex} % Package for bibliography (citing)
+\bibliography{bibliography.bib}
+\addbibresource{wg21.bib}
 
 % For tikzplotlib
 \usepackage[utf8]{inputenc}
