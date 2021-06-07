@@ -79,6 +79,8 @@
   %hidelinks,                        % Do not show boxes or coloured links.
 }
 
+\providecommand*{\listingautorefname}{Listing}
+
 \definecolor{mintedbg}{rgb}{0.95, 0.95, 0.95}
 \usemintedstyle{friendly}
 \setminted[]{
@@ -219,7 +221,7 @@
 \quickcharcount{#1}%
 \quickwordcount{#1}%
 \thecharcount characters and approximately \thewordcount spaces =
-{\xinttheiexpr[2](\thewordcount+\thecharcount)/4200\relax} standard pages%
+{\xinttheiexpr[2](\thecharcount)/2400\relax} standard pages%
 }
 
 \graphicspath{{Pictures/}}

@@ -256,8 +256,8 @@ $\Sequential(d_1, d_2)$ when $k = 1$.
   \end{prooftree}
   \begin{prooftree}
     \AxiomC{$\begin{array}{l}
-          \SigP{d_1}(s_1, \dots, s_{i_1}) = (x_1, \dots, x_{o_1}) \\
-          \forall j \in \{1, \dots, i_2\} y_j = \sum^{k -1}_{l=0} x_{j + k * i_2}
+          \SigP{d_1}(s_1, \dots, s_{i_1})      = (x_1, \dots, x_{o_1}) \\
+          \forall j \in \{1, \dots, i_2\}, y_j = \sum^{k -1}_{l=0} x_{j + k * i_2}
         \end{array}$}
     \UnaryInfC{$\SigP{\Merge(d_1, d_2)}(s_1, \dots, s_{i_1}) ={} \SigP{d_2}(y_1, \dots, y_{i_2})$}
   \end{prooftree}
@@ -296,7 +296,7 @@ $@$ in ${+, -, *, /}$, a block with the following properties is defined:
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
     \centering
-    \label{fig:block_merge}
+    \label{fig:block_arithmetic}
     \includestandalone[]{Pictures/block_plus}
   \end{figure}
 \end{minipage}
@@ -319,7 +319,7 @@ that same signal delayed by a single sample, and the very first sample has the v
 \begin{minipage}{0.5\linewidth}
   \begin{figure}[H]
     \centering
-    \label{fig:block_merge}
+    \label{fig:block_mem}
     \includestandalone[]{Pictures/block_mem}
   \end{figure}
 \end{minipage}
@@ -336,6 +336,7 @@ $\Mem^n$. The corresponding signal processor becomes
 \]
 
 \subsubsection{Delay}
+\label{sec:block_delay}
 
 By composing memory blocks, one can get a delay of arbitrary length, however, sometimes this length needs to
 vary at runtime. For this, we have the \Delay block. Given two signals $(d, s)$, this block

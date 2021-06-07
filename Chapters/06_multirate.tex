@@ -206,15 +206,15 @@ here:
 
 \begin{figure}
   \centering
-  \label{fig:block_resample}
   \includestandalone[]{Pictures/block_resample}
   \caption{The resample block as implemented in the EDA library}
+  \label{fig:block_resample}
 \end{figure}
 
 While this approach does not allow a signal processor to output at a different rate than its input, it still
-covers most relevant usecases. Actual sample-rate conversion is usually done at the edge of the system, and
-in the cases where it is needed, it can easilly be done outside of the component described as a block
-diagram.
+covers most relevant usecases. For instance, all plugin frameworks mentioned in the previous chapter have
+this constraint. In general, actual sample-rate conversion is usually done at the edge of the system, and in
+the cases where it is needed, it can easily be done outside of the component described as a block diagram.
 
 \section{Multirate in the EDA Library}
 \label{sec:multirate_eda}
@@ -244,8 +244,8 @@ The evaluator is where the interesting parts recide:
 \begin{cppcode}
   template<int N, AnyBlock Block>
   struct evaluator<Resample<N, Block>> : EvaluatorBase<Resample<N, Block>> {
-    constexpr evaluator(const Resample<N, Block>& resample) noexcept 
-      : EvaluatorBase<Resample<N, Block>>(resample) 
+    constexpr evaluator(const Resample<N, Block>& resample) noexcept
+    : EvaluatorBase<Resample<N, Block>>(resample)
     {}
 
     constexpr Frame<outs<Block>> eval(Frame<ins<Block>> in)
@@ -258,7 +258,8 @@ The evaluator is where the interesting parts recide:
       for (int i = 1; i < N; i++) {
         e.eval({});
       }
-      return res; }
+      return res; 
+    }
   };
 \end{cppcode}
 
@@ -314,7 +315,7 @@ ringbuffer, the kernel stored in two consecutive copies, and the meat of the eva
       auto start = kernel.begin() + t;
       return std::inner_product(start, start + N, z.begin(), 0.f);
     }
-  private:
+    private:
     std::size_t t = 0;
     std::array<float, N> z = {0};
     std::array<float, 2 * N> kernel;
@@ -331,12 +332,13 @@ To demonstrate oversampling in EDA, the $\tanh(5x)$ example used throughout this
 implemented in EDA as such:
 
 \begin{cppcodenl}
-auto quarterpass = fir(qp_coefficients);
-auto tanh = fun<1, 1>(&std::ftanh);
-auto saturation = resample<4>(_ * 5 | tanh, quarterpass, quarterpass);
+  auto quarterpass = fir(qp_coefficients);
+  auto tanh = fun<1, 1>(&std::ftanh);
+  auto saturation = resample<4>(_ * 5 | tanh, quarterpass, quarterpass);
 \end{cppcodenl}
 
-In fact, variations on this implementation is what was used to generate \autoref{fig:interpolation} and
+In fact, LV2 plugins constructed in a manner similar to the echo plugin described in \autoref{sec:echo_plugin}
+containing variations on this implementation is what was used to generate \autoref{fig:interpolation} and
 \autoref{fig:resampled_tanh}.
 
 The coefficients for the filter can be seen in \todo{appendix ??}.
@@ -352,7 +354,8 @@ complicated primitive blocks can be implemented in vanilla C++ by the user of th
 to rewrite the problem in terms of recursion and other basic compositional blocks.
 
 In \autoref{sec:multirate_blocks}, two possible solutions for multirate DSP were introduced, and while the second
-was selected here, the first also has potential, and while the implementation would be more involved, it
-enables operations that are not supported by the chosen design, by allowing blocks to output at a different
-sample rate than their input. Potential further work in this area includes exploring possible implementations
-of that design, and especially how it would integrate with work on vectorization and buffer-wise evaluation.
+was selected here, the first also has potential, though the implementation would be more involved. It does
+however enable operations that are not supported by the chosen design, by allowing blocks to output at a
+different sample rate than their input. Potential further work in this area includes exploring possible
+implementations of that design, and especially how it would integrate with work on vectorization and
+buffer-wise evaluation.
