@@ -4,24 +4,24 @@
 \section{Audio Processing}
 
 Digital Signal Processing consists of working with continuous signals broken into discrete samples, usually
-at a fixed sample rate. In the case of audio, the signals represent audio, and are eventually converted
-either from or to an analog signal, being for example played through speakers. In this thesis the focus is on
-audio processing, but most of the subjects covered would be applicable in other DSP domains.
+at a fixed sample rate. In the case of audio, the signals are eventually converted either from or to an
+analog signal, being for example played through speakers. In this thesis the focus is on audio processing,
+but most of the subjects covered would be applicable in other DSP domains.
 
-Digital audio processing is used in many areas, and on very different hardware. In music production on
+Digital audio processing is used in many areas, and on a wide range of hardware. In music production on
 desktop systems, audio editors called Digital Audio Workstations (DAWs) typically have plugin systems, of
 which there exist a few standards, with VST\footnote{\url{https://www.steinberg.net/en/company/technologies/vst3.html}} being the most popular. These audio
 plugins, be it effects or synthesizers are a large industry of very specialized and artistic tools that are a
-big part of most modern music. The same goes for audio effects in embedded contexts, where digital guitar
-effects especially has been a large industry for many decades, along with processing embedded in live concert
-equipment, or even apps on smartphones and other portable devices.
+big part of modern music production. The same goes for digital audio effects embedded in hardware systems,
+where digital guitar effects especially has been a large industry for many decades, along with live concert
+equipment, or even appl ications on smartphones and other portable devices.
 
-In most of these contexts, predictable performance is a requirement, as these are hard realtime systems,
-where failure to process a signal in time can at best result in unpleasant noise, and at worst damage
-equipment or the hearing of users or audience. Thus, audio processing usually follows a fixed signal path,
-i.e. algorithms that work in constant time, independently of the characteristics of the input. In practice,
-this means little to no branching, no loops of a non-fixed size, and often system-level constraints such as
-avoiding memory allocation and arbitrary system calls.
+In most of these contexts, predictable performance is a requirement, as they are hard realtime systems, where
+failure to process a signal in time can at best result in unpleasant noise, and at worst damage equipment or
+the hearing of users or audience. Thus, audio processing usually follows a fixed signal path, i.e. algorithms
+that work in constant time, independently of the characteristics of the input. In practice, this means little
+to no branching, no loops of a non-constant size, and often system-level constraints such as avoiding memory
+allocation and arbitrary system calls.
 
 \subsection{Characteristics and Terminology}
 
@@ -50,10 +50,10 @@ seen in \autoref{lst:jackmerge}.
     }
   }
   \end{cppcodenl}
-  \label{lst:jackmerge}
   \caption{An example asynchronous audio processing function that sends one input channel to two output channels.
     Numbers of channels are determined before registering the process function.
   }
+  \label{lst:jackmerge}
 \end{listing}
 
 \begin{figure}
@@ -65,7 +65,7 @@ seen in \autoref{lst:jackmerge}.
 \subsection{Constraints \& Problems}
 
 The area of digital audio signal processing poses some interesting problems from a programming language
-perspective, especially because of two primary constraints:
+perspective, because of especially two primary constraints:
 
 Firstly, as mentioned earlier, high and predictable performance and integration with embedded systems is very
 important, which is why DSP is usually implemented in a low-level systems programming language such as C or
@@ -89,7 +89,7 @@ Domain specific languages however, while providing syntax and semantics that are
 bring the inherent trade-off of ease of integration and expansion, compared to using a library in a general
 purpose language.
 
-\subsection{The Following Chapters}
+\subsection{Contributions}
 
 In this project, I will use the basic research on which FAUST is built to develop a C++ library that instead
 constitutes an \emph{Embedded Domain Specific Language}, or EDSL for audio DSP. I will show the advantages of staying within a

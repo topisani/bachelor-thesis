@@ -20,16 +20,16 @@
 \label{chap:blocks}
 
 Block diagrams are used to describe many kinds of systems in various engineering fields, and are also the
-primary specification language for DSP algorithms\autocite{kahles2019oversampling, castillocomparative, thomas2009, pirkle2019designing, fiir}. Besides just being a convention that
-probably stems from electronic circuit design leading to DSP, block diagrams are a good model for the fixed
-program structure of a DSP algorithm. Block diagrams are also inherintly recursively defined, where some
-blocks can be described as block diagrams themselves. The idea of programming DSP in terms of block diagrams
-has also been used by many DSP DSLs, where visual programming languages that let the user program by drawing
-connections between blocks such as Pure Data\footnote{\url{https://puredata.info}} and Max\footnote{\url{https://cycling74.com}} have
-become very popular, especially with users who are not primarily programmers. It is thus clear that block
-diagrams are a very useful tool for modelling DSP programs, which is why the researchers that designed FAUST
-selected it as the model for their DSL\autocite{orlarey2004}. In this chapter I will summarize the algebra
-designed by them to describe block diagrams as expressions that can be sequentially evaluated.
+primary specification language for DSP algorithms\autocite{kahles2019oversampling, castillocomparative, thomas2009, pirkle2019designing, fiir}. Besides just being a convention
+that probably stems from electronic circuit design leading to DSP, block diagrams are a good model for the
+fixed program structure of a DSP algorithm. Block diagrams are also inherintly recursively defined, where
+some blocks can be described as block diagrams themselves. The idea of programming DSP in terms of block
+diagrams has also been used by many DSP DSLs, where visual programming languages that let the user program by
+drawing connections between blocks such as Pure Data\footnote{\url{https://puredata.info}} and Max\footnote{\url{https://cycling74.com}}
+have become very popular, especially with users who are not primarily programmers. It is thus clear that
+block diagrams are a very useful tool for modelling DSP programs, which is why the researchers that designed
+FAUST selected it as the model for their DSL\autocite{orlarey2004}. In this chapter I will summarize the
+algebra designed by them to describe block diagrams as expressions that can be sequentially evaluated.
 
 It is also worth noting, that while DSP is the focus of this project, much of this applies to other domains
 where block diagrams are a useful model. For example, reactive programming\autocite{wan2000functional} can be
@@ -37,10 +37,10 @@ modeled using flow diagrams\autocite{reactiveprog}, which are very similar to bl
 
 \section{Algebra of Blocks}
 
-In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
-basic block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
-operations, split and merge. The rest of this chapter introduces this algebra of blocks in a language very
-similar to these papers, with minor differences in syntax and semantics noted along the way.
+In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al. introduce a series of five
+basic block diagram operations, which are expanded in their later work\autocite{orlarey2004} with two extra
+compositional operations, split and merge. The rest of this chapter introduces this algebra of blocks in a
+language very similar to these papers, with minor differences in syntax and semantics noted along the way.
 
 \begin{description}
   \item[A Signal] is a discrete function of time, such that the value of a signal $s \in \Sig$ at time
@@ -53,6 +53,7 @@ similar to these papers, with minor differences in syntax and semantics noted al
         $[-1; 1]$, and mostly this is represented as a 32-bit floating point value. Notice however, that
         signals may exceed this range, although inputs and outputs of the top-level signal processor should not.
 
+        \newpage
   \item[A Signal Processor] is a function $S^n \rightarrow S^m$, and the object of the model. Signal processors are
         a transformation from a number of \emph{input} signals to a number of \emph{output}
         signals, which are evaluated for each time value $t$ in order. The result
@@ -74,12 +75,12 @@ similar to these papers, with minor differences in syntax and semantics noted al
                                      & |\; \Merge(d_1, d_2)      \\
         \end{align*}
         Here, $\mathbb B$ denotes a domain-specific set of primitive blocks. Some of these will be
-        addressed in a later section.
+        addressed in \autoref{sec:block_domain_spec}.
 
         Faust and the related papers\autocite{orlarey2002,orlarey2004} uses single-character operator syntax for the basic
         operators of $\mathbb D$, but since the same syntax cannot be achieved exactly in C++, I will be
-        referring to them by their names as prefix functions to avoid confusion. The later chapter on the C++
-        implementation will cover the chosen syntax.
+        referring to them by their names as prefix functions to avoid confusion. The chosen syntax is covered in
+        \autoref{chap:cpp_lib}.
 
         To separate the syntax of blocks from the semantics, the function $\SigP{\ .\ } : \mathbb D
           \rightarrow \mathbb P$ is used to map a
@@ -90,10 +91,10 @@ similar to these papers, with minor differences in syntax and semantics noted al
 \end{description}
 
 \subsection{Basic block operations}
-Each of these seven block operations is described in detail by the FAUST authors in \autocite{orlarey2002}
-and \autocite{orlarey2004}, so here I will only give a brief introduction to each one, along with an example
-illustration and the type rules. Some are slightly simplified here when possible to still get the same
-expressivity, in those cases it will be noted.
+Each of these seven block operations is described in detail by the FAUST authors in the previously mentioned
+papers\autocite{orlarey2002,orlarey2004}, so here I will only give a brief introduction to each one, along with an
+example illustration and the type rules. Some are slightly simplified here, when doing so does not result in
+a loss of expressivity.
 
 \subsubsection{Identity}
 The $\Ident$ block is the simplest block - it simply takes one input signal, and outputs that
@@ -113,6 +114,7 @@ same signal untouched.
   \end{figure}
 \end{minipage}
 
+\newpage
 \subsubsection{Cut}
 The $\Cut$ block takes one input signal and outputs nothing. It can be very useful for
 discarding signals when composing blocks.
@@ -194,8 +196,8 @@ by a small square on the connection.
 
 \begin{minipage}{0.5\linewidth}
   \begin{prooftree}
-    \AxiomC{$d_1 : i_1 \rightarrow o_1$}
     \AxiomC{$d_2 : i_2 \rightarrow o_2$}
+    \AxiomC{$d_1 : i_1 \rightarrow o_1$}
     \AxiomC{$o_2 \leq i_1$}
     \AxiomC{$i_2 \leq o_1$}
     \QuaternaryInfC{$\Recursive(d_1, d_2) : i_1 - o_2 \rightarrow o_1$}
@@ -285,6 +287,7 @@ $\Sequential(d_1, d_2)$ when $k = 1$.
 \end{minipage}
 
 \subsection{Domain Specific Blocks}
+\label{sec:block_domain_spec}
 
 As mentioned in the beginning of this chapter, the full set of blocks includes some domain-specific
 primitives, denoted by the set $\mathbb B$. These are the blocks that perform actual useful

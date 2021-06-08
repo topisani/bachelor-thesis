@@ -190,7 +190,7 @@ functions, that each are provided to the LV2 framework.
         call to the evaluator constructed in \cpp{activate}.
 \end{description}
 
-This implementation, along with a metadata file (see the appendix, page \pageref{codefile:example/echo/metadata.ttl}), defines the
+This implementation, along with a metadata file (see the appendix, page \pageref{codefile:example/echo/manifest.ttl}), defines the
 plugin which is distributed as a folder containing the shared object binary and metadata. When installed on
 the system, these can be used from a host program that supports LV2, such as Audacity, which will then
 provide a UI for the controls. The UI generated for this effect by audacity can be seen in
@@ -251,6 +251,7 @@ provide a UI for the controls. The UI generated for this effect by audacity can 
   \label{lst:echo_lv2}
 \end{listing}
 
+\newpage
 \section{Performance Testing}
 
 Only very minimal performance testing of the library has been done, and only of this single example program.

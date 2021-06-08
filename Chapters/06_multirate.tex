@@ -16,7 +16,7 @@ two samples.
 
 The frequencies above the Nyquist limit don't just disappear from the sampled signal though, but will instead
 be mirrored back and fourth between the Nyquist frequency and $f = 0$. This behaviour is
-called aliasing, and is undesirable in most usecases, since it distorts the signal with non-harmonic
+called aliasing, and is undesirable in most usage, since it distorts the signal with non-harmonic
 frequencies.
 
 When initially sampling an analog signal, the main way to avoid aliasing is simply to use an analogue
@@ -49,7 +49,7 @@ where the input is a simple sine wave (i.e. a single peak frequency), this waves
 odd harmonics, that is it introduces frequencies at odd multiples of the frequencies in the original signal.
 Adjusting the gain will change the magnitude (volume) of these frequencies.
 
-In the following introduction to aliasing and oversampling, I will refer heavilly to the graphs in
+In the following introduction to aliasing and oversampling, I will refer heavily to the graphs in
 \autoref{fig:resampled_tanh}. These are visualizations of various runs of this waveshaping distortion, all with an
 input signal of a sine wave at \SI{1800}{Hz}, and $g = 5$. These parameters were
 chosen simply because of the visualizations they result in, but do reflect real-world usecases. (a) is
@@ -117,6 +117,7 @@ pass filter to remove them.
   \label{fig:interpolation}
 \end{figure}
 
+\newpage
 \subsection{FIR Filters}
 \label{sec:fir_filters}
 
@@ -124,7 +125,7 @@ There are a lot of methods to designing and implementing interpolation filters f
 efficient results, but most of them are based on Finite Impulse Response (FIR) filters. A FIR filter of order
 $N$ is a simple convolution operation where each output is a weighted sum of the
 $N + 1$ most recent inputs. Designing FIR filters, i.e. picking the right coefficients, is a
-heavilly researched topic\autocite{kahles2019oversampling, SORIA2013, thomas2009}, and not something I will go into in this project, however,
+heavily researched topic\autocite{kahles2019oversampling, SORIA2013, thomas2009}, and not something I will go into in this project, however,
 the filters used for testing and for \autoref{fig:resampled_tanh}, are FIR filters of order $N = 128$,
 designed using the method described in \autocite{fiir}. These filters have a fairly high order to
 ensure a very steep cutoff, but in real use there is a tradeoff between the efficiency of a lower filter
@@ -241,6 +242,7 @@ during downsampling (see \autoref{sec:decimation}).
 
 The evaluator is where the interesting parts recide:
 
+\newpage
 \begin{cppcode}
   template<int N, AnyBlock Block>
   struct evaluator<Resample<N, Block>> : EvaluatorBase<Resample<N, Block>> {
@@ -299,6 +301,7 @@ point-wise evaluated FIR filter would usually be implemented, with a \cpp{std::a
 ringbuffer, the kernel stored in two consecutive copies, and the meat of the evaluation being done with
 \cpp{std::inner_product}\footnote{see \url{https://en.cppreference.com/w/cpp/algorithm/inner_product}}:
 
+\newpage
 \begin{cppcodenl}
   template<std::size_t N>
   struct evaluator<FIRFilter<N>> : EvaluatorBase<FIRFilter<N>> {

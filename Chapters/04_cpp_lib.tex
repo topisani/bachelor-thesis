@@ -21,6 +21,9 @@ especially the features commonly refered to under the umbrella term
 \emph{concepts}\autocite{cppr:concepts}, which help constrain the template parameters of templated
 entities.
 
+The code library code and all tests and examples can be found in \autoref{appendix}, and on
+\url{https://github.com/topisani/eda}.
+
 \section{Blocks}
 
 One important design decision in this library, is to split the declaration of a block diagram from the
@@ -33,12 +36,13 @@ visualization of the block diagram.
 
 \subsubsection{BlockBase}
 
-As described in the previous chapter, a block in $\mathbb D$ has a number of inputs and a number
-of outputs. In EDA, these are modelled by extending the \cpp{BlockBase} CRTP\footnotemark{} base class, meaning a base
-class template that is always passed the derived class as its first template parameter:
+As defined in the previous chapter, a block in $\mathbb D$ has a number of inputs and a number of
+outputs. In EDA, these are modelled by extending the \cpp{BlockBase} CRTP\footnotemark{} base class, meaning a base class
+template that is always passed the derived class as its first template parameter:
 
 \footnotetext{Curriously Recurring Template Pattern, see \url{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}}
 
+\newpage
 \begin{cppcodenl}
   template<typename Derived, std::size_t InChannels, std::size_t OutChannels>
   struct BlockBase {
@@ -243,6 +247,7 @@ With these, we can start to build simple block diagrams, such as the following, 
 \label{sec:eda_lit_and_ref}
 
 By now we know how to declare primitive and compositional blocks, so the following code should seem natural.
+\newpage
 \begin{cppcodenl}
   struct Literal : BlockBase<Literal, 0, 1> {
     float value;
@@ -276,7 +281,7 @@ provided:
   }
 \end{cppcodenl}
 
-\section{Operator overloads and shorthand syntax}
+\section{Operator overloading and shorthand syntax}
 
 With the block types and construction functions, block diagrams can be declared by composing the
 constructors. For example, the following declares a block diagram that calculates the relative difference
@@ -366,10 +371,10 @@ simple. They all follow the exact same pattern, so as an example, here is the im
 \end{cppcodenl}
 
 Notably, this operator takes two references to arbitrary objects, and delegates to the constructor function
-\cpp{sequential}. However, two interesting things are going on.
+\cpp{sequential}. However, two things especially are of note.
 
 Firstly, when implementing an operator overload template in namespace scope, it is very important to make
-sure that the template arguments are propperly constrained, since the operator would otherwise be valid in
+sure that the template arguments are properly constrained, since the operator would otherwise be valid in
 ambiguous situations, such as when \cpp{Lhs} and \cpp{Rhs} are both \cpp{int}. The approach
 used here is to use a requires-clause to make the operator only participate in overload resolution if either
 \cpp{Lhs} \emph{or} \cpp{Rhs} to model \concept{AnyBlockRef}. Then, both arguments are passed through the
@@ -380,7 +385,7 @@ function
 
 The purpose of this, is to allow literal floating-point values to be involved in EDA block expressions, i.e.
 allow the expression \cpp{_ * 0.5}, which takes a signal and multiplies it by the floating point
-value $0.5$. Without auto-boxing literals, the equivalient expression would be
+value $0.5$. Without auto-boxing literals, the equivalent expression would be
 \cpp{_ * literal(0.5)} (or \cpp{_ * 0.5_eda} with the user-defined literal introduced in \autoref{sec:eda_lit_and_ref}).
 
 The implementation of \cpp{as_block} is very simple. It consists of two overloads, one that takes an
@@ -418,7 +423,7 @@ which builds a parallel block. This means the second expression would have to be
 argument explicitly converted to a block type, like \cpp{(1_eda, 2)}.  Whether this slight decrease in
 verbosity is worth the added complexity is left up to the reader, as simply removing the
 \cpp{as_block} calls and requiring both operands to model \concept{AnyBlockRef} should be an easy
-change to make to the relevant code. For completeness sake, the library as described here includes
+change to make to the relevant code. For the sake of completeness, the library as described here includes
 auto-boxing.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -433,7 +438,7 @@ design makes sense for a couple of reasons, but most importantly, it allows for 
 signal processor evaluator. For example, one could build a visitor that generates a visual representation of
 the block diagram, or one that generates a user interface. Alternatively, other evaluators could be built,
 for example one that vectorizes the operations (see Scaringella et al. \emph{Automatic vectorization in Faust} (2003)
-\autocite{faust_auto_vec} for an aproach that could be taken in EDA as well)
+\autocite{faust_auto_vec} for an approach that could be taken in EDA as well)
 
 As presented here however, EDA contains only one visitor, the \cpp{evaluator<Block>}, which evaluates the
 signal processor of a block for a single frame of data at a time, i.e. the values $(s_0(t), \dots, s_n(t))$ of a
@@ -514,6 +519,7 @@ following requirements:
 
 To construct the evaluator of a block diagram, the factory function \cpp{make_evaluator} is supplied:
 
+\newpage
 \begin{cppcodenl}
   template<AnyBlockRef T>
   constexpr auto make_evaluator(T&& b)
@@ -538,7 +544,7 @@ that works on whole buffers of frames. Other than that, its main purpose is for 
 \subsubsection{Primitive block evaluator}
 For primitive blocks, the evaluator implementations are fairly simple, one just needs to make sure to follow
 the three requirements of \concept{AnEvaluator}, i.e. deriving from
-\cpp{EvaluatorBase<Block>}, having a \cpp{evaluator(Block)} constructor, and implementing the propper \cpp{eval}
+\cpp{EvaluatorBase<Block>}, having a \cpp{evaluator(Block)} constructor, and implementing the proper \cpp{eval}
 function.
 
 As an example, here is the \cpp{evaluator<Plus>} specialization:
@@ -563,23 +569,21 @@ a \cpp{std::tuple<evaluator<Operand>...>}, constructed from the operand blocks a
 to the constructor. The implementation looks like this:
 
 \begin{cppcodenl}
-  namespace detail {
-    template<typename T>
-    struct add_evaluator {};
-
-    template<typename... Ts>
-    struct add_evaluator<std::tuple<Ts...>> {
-      using type = std::tuple<evaluator<Ts>...>;
-    };
-
-    template<typename T>
-    using add_evaluator_t = typename add_evaluator<T>::type;
-  } // namespace detail
+  template<typename T>
+  struct add_evaluator {};
+    
+  template<typename... Ts>
+  struct add_evaluator<std::tuple<Ts...>> {
+    using type = std::tuple<evaluator<Ts>...>;
+  };
+  
+  template<typename T>
+  using add_evaluator_t = typename add_evaluator<T>::type;
 
   template<AComposition T>
   struct EvaluatorBase<T> {
     constexpr EvaluatorBase(const T& t) : operands(t.operands) {}
-    detail::add_evaluator_t<operands_t<T>> operands;
+    add_evaluator_t<operands_t<T>> operands;
   };
 \end{cppcodenl}
 
