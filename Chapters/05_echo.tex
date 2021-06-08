@@ -172,7 +172,7 @@ in \autoref{chap:multirate}.
 
 An LV2 plugin consists of data definition files in the \emph{turtle} specification language, and
 implementation in C/C++. For the EDA plugins, I wrote a small wrapper to write plugins as a C++ class instead
-(see \todo{appendix ??}), but it follows the structure of the C API closely.
+(see the appendix, page \pageref{codefile:example/lv2.hpp}), but it follows the structure of the C API closely.
 
 The C++ code that implements the echo plugin can be seen in \autoref{lst:echo_lv2}. It consists of three
 functions, that each are provided to the LV2 framework.
@@ -183,17 +183,18 @@ functions, that each are provided to the LV2 framework.
         call to \cpp{run}.
   \item [\cpp{activate}] is called after all ports have been connected, before the first call to \cpp{run}, and in it
         the EDA blocks and evaluator are constructed. The evaluator is stored in a \cpp{DynEvaluator} a
-        type-erasing wrapper for evaluators (see \todo{appendix ??}). Since the control ports are pointers to
-        float values, they can be used directly with the \Block{ref} block.
+        type-erasing wrapper for evaluators (see the appendix, page \pageref{code:dyn_eval}). Since the control ports
+        are pointers to float values, they can be used directly with the \Block{ref} block.
   \item [\cpp{run}] is called to process incoming audio data. Its single parameter \cpp{n_samples} is the number of
         samples available in the audio port arrays given earlier, so the implementation is a simple loop through and
         call to the evaluator constructed in \cpp{activate}.
 \end{description}
 
-This implementation, along with a metadata file (see \todo{appendix ??}), defines the plugin which is
-distributed as a folder containing the shared object binary and metadata. When installed on the system, these
-can be used from a host program that supports LV2, such as Audacity, which will then provide a UI for the
-controls. The UI generated for this effect by audacity can be seen in \autoref{fig:echo_ui}.
+This implementation, along with a metadata file (see the appendix, page \pageref{codefile:example/echo/metadata.ttl}), defines the
+plugin which is distributed as a folder containing the shared object binary and metadata. When installed on
+the system, these can be used from a host program that supports LV2, such as Audacity, which will then
+provide a UI for the controls. The UI generated for this effect by audacity can be seen in
+\autoref{fig:echo_ui}.
 
 \begin{figure}
   \centering
@@ -254,7 +255,8 @@ controls. The UI generated for this effect by audacity can be seen in \autoref{f
 
 Only very minimal performance testing of the library has been done, and only of this single example program.
 The performance was compared to an equivalent handwritten C++ program, by measuring 1000 iterations of
-processing buffers of 1024 samples each. The code for this benchmark can be seen in \todo{appendix ??}.
+processing buffers of 1024 samples each. The code for this benchmark can be seen in the appendix, page
+\pageref{codefile:tests/benchmarks.cpp}.
 
 \begin{table}[H]
   \centering

@@ -30,9 +30,7 @@
 \newcommand{\includechapter}[1]{
   \input{Chapters/#1.tex}
   \vspace{\baselineskip}
-  % \iffalse
-  \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
-  % \fi
+  % \emph{\color{red!70} This chapter contains \quickpagecount{Chapters/#1}}
   \cleardoublepage
 }
 
@@ -51,12 +49,12 @@
 
 \printbibliography[heading=bibintoc,title={Bibliography}]
 
-\iffalse
-  \cleardoublepage
-  \appendix
-  \input{Backmatter/Appendix.tex}
-  \cleartoleftpage
-  \input{Backmatter/Backpage.tex}
-\fi
+% \iffalse
+\cleardoublepage
+\appendix
+\input{Backmatter/Appendix.tex}
+\cleartoleftpage
+\input{Backmatter/Backpage.tex}
+% \fi
 
 \end{document}

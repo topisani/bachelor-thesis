@@ -1,1 +1,27 @@
-\chapter{Appendix section}
+\chapter{Code}
+This appendix contains all code written for this project. It is also available on github at
+\url{https://github.com/topisani/eda} for easier browsing.
+
+\section{EDA Library Code}
+
+\newcommand{\inputcode}[2]{
+  \hrule %
+  \subsection*{\texttt{#2}}
+  \label{codefile:#2}
+  \hrule
+  \inputminted[linenos, mathescape]{#1}{eda/#2}
+}
+
+\inputcode{cpp}{include/eda/internal/util.hpp}
+\inputcode{cpp}{include/eda/block.hpp}
+\inputcode{cpp}{include/eda/frame.hpp}
+\inputcode{cpp}{include/eda/evaluator.hpp}
+\inputcode{cpp}{include/eda/syntax.hpp}
+\inputcode{cpp}{include/eda/resampling.hpp}
+
+\section{Example code}
+\inputcode{cpp}{example/lv2.hpp}
+\inputcode{cpp}{example/echo/echo.cpp}
+\inputcode{turtle}{example/echo/manifest.ttl}
+\inputcode{cpp}{example/tanh/tanh.cpp}
+\inputcode{turtle}{example/tanh/manifest.ttl}

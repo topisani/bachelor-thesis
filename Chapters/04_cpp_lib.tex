@@ -1,13 +1,6 @@
 \chapter{The C++ Library}
 \label{chap:cpp_lib}
 
-% When implementing this algebra of blocks in C++, I used the basic concepts of expression templates to
-% separate building an AST from evaluating it. This has the advantage that multiple visitors can be implemented
-% for the AST, such as a basic evaluator, an optimizer, a buffer-based evaluator or even one that outputs a
-% visual representation of the AST, like fausts block diagram generator.
-% 
-% \todo{Introduce Bachelet/Yon (\url{https://hal.archives-ouvertes.fr/hal-01351060/document}) as a reference point for this section}
-
 Using the block algebra introduced in the previous chapter, I have developed an embedded domain specific
 language as a C++ Library called EDA (Expressive DSP for Audio). The goal of this library is to implement a
 syntax based on the algebra of blocks, and thus resembling FAUST, while staying within the C++ ecosystem, and
@@ -210,8 +203,8 @@ signature. For example, parallel composition is declared as follows:
 
 Here the signature is calculated differently from sequential composition, and there are no requirements on
 \cpp{Lhs} and \cpp{Rhs}. Recursive, split, and merge composition are all
-implemented similarly by simply translating the requirements and signature to C++ type requirements.
-\todo{Reference the code in the appendix}
+implemented similarly by simply translating the requirements and signature to C++ type requirements (see
+appendix, page \pageref{code:remaining_blocks}, line \ref{code:remaining_blocks}).
 
 \subsection{Arithmetic}
 
@@ -315,7 +308,7 @@ The first step is to decide which C++ operators will be mapped to which block di
 this the EDA library has to make some other choices than Faust, as the availability of overloadable operators
 in C++ obviously places some constraints. The syntax here has been selected to stay as close as possible to
 faust, but in practice one might consider some changes, as especially overriding the comma operator is
-usually discouraged in idiomatic C++\todo{citation needed}.
+usually discouraged in idiomatic C++.
 
 \begin{table}[]
   \centering
@@ -449,7 +442,8 @@ the \cpp{Frame<N>} class, where
 \cpp{N} is the number of channels. This class can mostly just be regarded as a wrapper around \cpp{std::array<float,
 N>}, with some minor tweaks in construction. It also provides the free functions
 \cpp{slice<I, J>(Frame<N>) -> Frame<J - I>} and \cpp{concat(Frame<N>, Frame<M>) -> Frame<N + M>}, which are mostly self explanatory, and
-thus also omitted here. The full class and function definitions can be seen in \todo{appendix ???}.
+thus also omitted here. The full class and function definitions can be seen in the appendix, page
+\pageref{codefile:include/eda/frame.hpp}.
 
 To illustrate the relationship between the block declarations and evaluator instances, consider the following
 program, which evaluates the difference between its current input and its previous input:
@@ -613,14 +607,16 @@ for $\Sequential(l, r)$, by first directly calling the evaluator of the first op
 result of that operation to the evaluator of the second operand.
 
 The other compositional blocks are slightly more complicated to implement, but at this point it is just
-"normal" C++ in the \cpp{eval} functions. The full implementations can be seen in \todo{appendix ??}
+conventional C++ in the \cpp{eval} functions. The full implementations can be seen in the
+appendix, page \pageref{code:comp_eval}.
 
 \section{Extra features}
 
 One of the advantages of working inside C++ instead of in a DSL, is the ability to easily add features and
 integrations with other parts of the C++ ecosystem. At the time of writing, the EDA library contains a few
 such examples, and a couple of the more interesting ones are covered in this section. I will not go deep into
-the implementation details here, but the code can be seen in \todo{appendix ??}.
+the implementation details here, but the code can be seen in the appendix, pages \pageref{code:extra_block} and
+\pageref{code:extra_eval}.
 
 \subsection{Functions}
 
@@ -634,7 +630,7 @@ hyperbolic tangent function (as used in \autoref{chap:multirate}), and floating 
 \end{cppcodenl}
 
 The \cpp{fun} block simply captures the function, and the evaluator delegates to it directly.
-The implementation can be seen in \todo{appendix ??}.
+The implementation can be seen in the appendix, page \pageref{code:extra_block}.
 
 A stateful version of \cpp{fun} also exists, which can store arbitrary state in the evaluator. \cpp{fun<I, O>(f, state_inits...)} copies \cpp{state_inits...}
 into new objects on each evaluator construction, and the evaluator passes references to these objects as
