@@ -1,0 +1,114 @@
+\chapter{Introduction}
+\label{chap:intro}
+
+\section{Audio Processing}
+
+Digital Signal Processing consists of working with continuous signals broken into discrete samples, usually
+at a fixed sample rate. In the case of audio, the signals represent audio, and are eventually converted
+either from or to an analog signal, being for example played through speakers. In this thesis the focus is on
+audio processing, but most of the subjects covered would be applicable in other DSP domains.
+
+Digital audio processing is used in many areas, and on very different hardware. In music production on
+desktop systems, audio editors called Digital Audio Workstations (DAWs) typically have plugin systems, of
+which there exist a few standards, with VST\footnote{\url{https://www.steinberg.net/en/company/technologies/vst3.html}} being the most popular. These audio
+plugins, be it effects or synthesizers are a large industry of very specialized and artistic tools that are a
+big part of most modern music. The same goes for audio effects in embedded contexts, where digital guitar
+effects especially has been a large industry for many decades, along with processing embedded in live concert
+equipment, or even apps on smartphones and other portable devices.
+
+In most of these contexts, predictable performance is a requirement, as these are hard realtime systems,
+where failure to process a signal in time can at best result in unpleasant noise, and at worst damage
+equipment or the hearing of users or audience. Thus, audio processing usually follows a fixed signal path,
+i.e. algorithms that work in constant time, independently of the characteristics of the input. In practice,
+this means little to no branching, no loops of a non-fixed size, and often system-level constraints such as
+avoiding memory allocation and arbitrary system calls.
+
+\subsection{Characteristics and Terminology}
+
+Digital Audio is represented as a stream of samples, each either a floating or fixed point number, and for
+processing, the stream is split up into buffers of a fixed size. In most normal applications, the samples are
+32 bit floats, at sample rates of anywhere from 44.1kHz to 192kHz. Buffer sizes vary a lot depending on the
+realtime requirements, from as low as 16 samples up to 4096. Larger buffers usually allow for better
+performance, while increasing the processing latency. Low latency is often an important requirement,
+especially when the processing in question is being used by live musicians, or in other real-time processing
+situations.
+
+When dealing with multiple channels in one stream, such as would be the case for stereo or surround sound,
+the samples from each channel are usually interleaved, forming buffers of frames of samples (see
+\autoref{fig:buffersframes}). These buffers are then passed to a processing callback one at a time by the host
+audio system, whether that is the OS directly, or in the case of audio plugins, the plugin host application.
+This asynchronous callback-based model is what is used by most real time audio frameworks, such as
+ALSA\footnote{\url{https://alsa-project.org}}, JACK\footnote{\url{https://jackaudio.org}} and VST. An example of using such an interface can be
+seen in \autoref{lst:jackmerge}.
+
+\begin{listing}
+  \begin{cppcodenl}
+  int process(float* input, float* output, unsigned nframes) {
+    for (int i = 0; i < nframes; i++) {
+      output[i * 2] = input[i];
+      output[i * 2 + 1] = input[i];
+    }
+  }
+  \end{cppcodenl}
+  \label{lst:jackmerge}
+  \caption{An example asynchronous audio processing function that sends one input channel to two output channels.
+    Numbers of channels are determined before registering the process function.
+  }
+\end{listing}
+
+\begin{figure}
+  \includestandalone[width=\textwidth]{Pictures/framevsbuffer}
+  \caption{A stereo audio signal broken into buffers of 8 frames of two samples each.}
+  \label{fig:buffersframes}
+\end{figure}
+
+\subsection{Constraints \& Problems}
+
+The area of digital audio signal processing poses some interesting problems from a programming language
+perspective, especially because of two primary constraints:
+
+Firstly, as mentioned earlier, high and predictable performance and integration with embedded systems is very
+important, which is why DSP is usually implemented in a low-level systems programming language such as C or
+C++. As an example, when processing a stereo signal at the standard CD sample rate of \SI{44.1}{kHz},
+one has to be able to process \num{88200} samples per second, which leaves around
+\SI{11.3}{\micro\second} per sample.
+
+Secondly, audio effects and synthesizers are often designed by people who are not primarily programmers, but
+creative sound designers who compose low-level DSP algorithms into new tools to be used by musicians. And
+even when being developed by a programmer with experience in writing low-latency high-performance code, DSP
+programs are inherently compositional, often resembling an electronic circuit in structure more than an
+imperative program.
+
+For these reasons, various Domain Specific Languages have been developed that try to solve these issues. One
+such DSL is FAUST\autocite{faustwebsite}, which will be further introduced in \autoref{sec:related_faust}, but is
+especially notable for being the product of a lot of research for the past 20 years. FAUST addresses these
+issues as a functional language based on an algebra developed to describe signal processors as block
+diagrams, and compiles to C++ to be easily integrable in existing systems.
+
+Domain specific languages however, while providing syntax and semantics that are tailored to the domain,
+bring the inherent trade-off of ease of integration and expansion, compared to using a library in a general
+purpose language.
+
+\subsection{The Following Chapters}
+
+In this project, I will use the basic research on which FAUST is built to develop a C++ library that instead
+constitutes an \emph{Embedded Domain Specific Language}, or EDSL for audio DSP. I will show the advantages of staying within a
+general purpose language, and specifically how using operator overloading and expression templates in C++
+allows for syntax that closely resembles that of FAUST, while staying easy to extend and integrate with
+existing systems and technologies.
+
+In \autoref{chap:related} I look at existing solutions in this domain, including more detail about FAUST, as
+well as a few similar solutions in other domains.
+
+In \autoref{chap:blocks} I introduce the block algebra originally developed for FAUST, along with a few
+extensions and changes applied for this project.
+
+In \autoref{chap:cpp_lib} I use this block algebra to develop a C++ library which implements an EDSL with
+syntax and semantics based on the previously introduced block algebra.
+
+In \autoref{chap:echo} I use this library to implement an audio effect plugin, and demonstrate how it can
+be used in a real-world scenario.
+
+Finally, in \autoref{chap:multirate}, I delve into multirate DSP as an example of how the library can easily be
+extended with even a fairly complex feature that remains unimplemented by FAUST, and in this process cover
+some interesting intricacies of DSP.

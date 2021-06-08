@@ -1,0 +1,31 @@
+\chapter{Conclusion \& Further Work}
+
+Building on existing research, this thesis has explored an alternative way to write DSP programs modelled as
+block diagrams. I have built an embedded DSL in a C++ library by applying existing techniques from other
+domains to a this domain, and used that library to write an audio plugin that can be used in audio editors.
+Furthermore I have shown the advantages of working inside a general purpose language, and specifically how
+constrained C++ templates can provide a framework where parts of the algorithms can be written in
+conventional C++, using the proven constructs and structures of the language in low-latency situations. I
+have also explored multirate DSP as an example of an easy extension to the library to solve a specific signal
+processing problem that requires more specialized design to implement in a DSL compiler.
+
+While the testing of the library performed so far is minimal, it gives an indication of what is possible
+using the ideas presented. Even in its current unoptimized state, the library only has a performance overhead
+of around 1.5x compared to handwritten code. While this number is based on only a single example, it is an
+example that covers most areas of the library, and should give an indication of the magnitude. I have also
+presented some ideas on how to improve the performance, such as an evaluator that uses vector instructions
+and optimizing the AST before evaluation. In both of these areas a lot of prior research exists, that could
+be applied to this project.
+
+Further enhancements could also be made to the syntactical aspects provided by the library, such as naming
+signals as variables, and declaring blocks with a function syntax. However, the current syntax has been shown
+to be useful already, and provide a good mapping from blocks diagrams of signal processors to code.
+
+Lastly, as described in \autoref{chap:multirate}, multirate DSP is a complex problem that can be highly
+optimized. The current implementation shows the basics of how it could be implemented, but for real use it
+should be improved with better filters, as well as expanded to support undersampling in addition to
+oversampling.
+
+All in all, I believe that this project has shown the idea of using an EDSL built on block algebra to be
+viable, as well as providing the basis of how such a library could be implemented.
+

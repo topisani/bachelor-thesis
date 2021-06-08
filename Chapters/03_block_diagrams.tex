@@ -19,14 +19,28 @@
 \chapter{Block Diagrams}
 \label{chap:blocks}
 
-\todo{Introduce the concept of block diagrams for describing signal processors}\\
+Block diagrams are used to describe many kinds of systems in various engineering fields, and are also the
+primary specification language for DSP algorithms\autocite{kahles2019oversampling, castillocomparative, thomas2009, pirkle2019designing, fiir}. Besides just being a convention that
+probably stems from electronic circuit design leading to DSP, block diagrams are a good model for the fixed
+program structure of a DSP algorithm. Block diagrams are also inherintly recursively defined, where some
+blocks can be described as block diagrams themselves. The idea of programming DSP in terms of block diagrams
+has also been used by many DSP DSLs, where visual programming languages that let the user program by drawing
+connections between blocks such as Pure Data\footnote{\url{https://puredata.info}} and Max\footnote{\url{https://cycling74.com}} have
+become very popular, especially with users who are not primarily programmers. It is thus clear that block
+diagrams are a very useful tool for modelling DSP programs, which is why the researchers that designed FAUST
+selected it as the model for their DSL\autocite{orlarey2004}. In this chapter I will summarize the algebra
+designed by them to describe block diagrams as expressions that can be sequentially evaluated.
+
+It is also worth noting, that while DSP is the focus of this project, much of this applies to other domains
+where block diagrams are a useful model. For example, reactive programming\autocite{wan2000functional} can be
+modeled using flow diagrams\autocite{reactiveprog}, which are very similar to block diagrams.
 
 \section{Algebra of Blocks}
 
 In the 2002 paper \emph{An Algebraic approach to Block Diagram Constructions}\autocite{orlarey2002} Orlarey et al introduce a series of five
 basic block diagram operations, which are expanded in \autocite{orlarey2004} with two extra compositional
 operations, split and merge. The rest of this chapter introduces this algebra of blocks in a language very
-similar to \autocite{orlarey2004}, with minor differences in syntax and semantics noted along the way.
+similar to these papers, with minor differences in syntax and semantics noted along the way.
 
 \begin{description}
   \item[A Signal] is a discrete function of time, such that the value of a signal $s \in \Sig$ at time

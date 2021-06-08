@@ -11,3 +11,7 @@ hook -group latex global BufWritePost .*\.(tex) %{
     rm "${kak_reg_percent/.tex/.bak}"
   }
 }
+
+hook -group latex global BufWritePost .*\.(tex) %{
+  spell
+}

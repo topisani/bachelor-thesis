@@ -1,22 +1,28 @@
-\chapter{Review of Existing Material} \label{sec:review}
-
-\todo{more examples}
+\chapter{Review of Relevant Material}
+\label{chap:related}
 
 This chapter will cover some examples of existing solutions for writing DSP for audio applications in C++,
 along with examples of C++ libraries from other domains that attempt to solve similar issues.
 
-\section{Faust}
-Faust is described as a \emph{"functional programming language for sound synthesis and audio processing with a strong focus on the design
-  of synthesizers, musical instruments, audio effects, etc."\autocite{faustwebsite}} Here, especially the notion of \emph{functional} is
-interesting. Faust is written as a purely function processing pipeline, which allows for lazy evaluation and
-common subexpression elimination\footnote{CSE: If the same subexpression appears in several places, the code is rearranged to only compute the value once}. An example of basic faust code can be seen in
-\autoref{faustex1}. This functional style also abstracts away nearly all implementation details with
-regards to buffers, code vectorization, loops etc, and represents purely the intent of the programmer in
-terms of the high level DSP algorithms. Thus, faust is a DSL for \emph{specification} of DSP algorithms,
-which can then be compiled/transpiled to various targets, including C++, JAVA, WebAssembly etc. Other than
-just targeting multiple languages, Faust includes a system called \emph{architectures}, which defines
-wrapper classes and files, allowing embedding in any system, such as smartphone applications, plugins for
-audio software, web apps etc.
+\section{FAUST}
+As already mentioned in the introduction, this project builds largely on the research performed by the FAUST
+authors. It was first developed Orlarey, Fober and Letz at Grame, Centre National de Creation Musciale, Lyon,
+France in 2002\autocite{orlarey2002}, and has for the past 20 years been the basis of a lot of research in the
+area of expressive DSP programming languages\autocite{letz:hal-02158925, buffa:hal-01721483, dimitrov:hal-02158954, berdahl:hal-03162897}.
+
+The authors describe FAUST as a \emph{"functional programming language for sound synthesis and audio processing with a strong focus on the design
+  of synthesizers, musical instruments, audio effects, etc."\autocite{faustwebsite}}
+
+Here, especially the notion of \emph{functional} is interesting. Faust is written as a purely function
+processing pipeline, which allows for lazy evaluation and common subexpression
+elimination\footnote{CSE: If the same subexpression appears in several places, the code is rearranged to only compute the value once}. An example of basic faust code can be seen in \autoref{faustex1}. This
+functional style also abstracts away nearly all implementation details with regards to buffers, code
+vectorization, loops etc, and represents purely the intent of the programmer in terms of the high level DSP
+algorithms. Thus, faust is a DSL for \emph{specification} of DSP algorithms, which can then be
+compiled/transpiled to various targets, including C++, JAVA, WebAssembly etc. Other than just targeting
+multiple languages, Faust includes a system called \emph{architectures}, which defines wrapper classes and
+files, allowing embedding in any system, such as smartphone applications, plugins for audio software, web
+apps etc.
 
 \begin{listing}
   \label{faustex1}

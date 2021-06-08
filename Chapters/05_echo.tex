@@ -12,7 +12,7 @@ data passed in one at a time.
 The example developed in this chapter is a simple echo audio effect, i.e. a plugin that continuously repeats
 its input with some delay, where each echo gets quieter and looses "brightness", i.e. the high frequency
 components of the signal. Echos were introduced in the 1950s, and have become a staple of music production,
-being used especially for vocals and guitars. The first analogue echos were based on a tape loop, where the
+being used especially for vocals and guitars. The first analog echos were based on a tape loop, where the
 input audio was continuously written and then read back. The continuous repetitions provided by an echo are
 achieved using a feedback loop, meaning the output of the echo is sent back into the input, but with reduced
 gain and/or other processing applied.
@@ -252,10 +252,29 @@ controls. The UI generated for this effect by audacity can be seen in \autoref{f
 
 \section{Performance Testing}
 
-Only very minimal performance testing of the library has been performed, and only of this single example
-program.
+Only very minimal performance testing of the library has been done, and only of this single example program.
+The performance was compared to an equivalent handwritten C++ program, by measuring 1000 iterations of
+processing buffers of 1024 samples each. The code for this benchmark can be seen in \todo{appendix ??}.
 
-\todo{...}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|l|r|}
+    \hline
+    Program             & Average time pr. iteration \\
+    \hline\hline
+    Handwritten C++     & \SI{11.198}{\micro\second} \\
+    % \hline
+    EDA                 & \SI{16.770}{\micro\second} \\
+    \hline\hline
+    Relative Difference & +49.7\%                    \\
+    \hline
+  \end{tabular}
+\end{table}
+
+As a simple benchmark, this shows a performance penalty of roughly 50\%, which is very promising for the
+completely unoptimized version of the library. It seems highly likely from this that some of the
+optimizations mentioned in \autoref{sec:eda_conc} could reduce this number a lot, but of course more
+measurements would need to be done in tandem with optimizations.
 
 \section{Conclusion}
 

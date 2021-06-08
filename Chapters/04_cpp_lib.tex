@@ -8,6 +8,28 @@
 % 
 % \todo{Introduce Bachelet/Yon (\url{https://hal.archives-ouvertes.fr/hal-01351060/document}) as a reference point for this section}
 
+Using the block algebra introduced in the previous chapter, I have developed an embedded domain specific
+language as a C++ Library called EDA (Expressive DSP for Audio). The goal of this library is to implement a
+syntax based on the algebra of blocks, and thus resembling FAUST, while staying within the C++ ecosystem, and
+allowing easy integration in both directions, i.e. using EDA within other C++ frameworks
+\emph{and} using other C++ libraries and algorithms within EDA.
+
+The library is based on expression templates\autocite{bachelet}, which is the idea of representing an AST
+as a static tree of templated types, and then building this AST by overloading operators. For example, the
+expression
+\cpp{a + (b * 2)} would evaluate to an object of the type \cpp{Plus<Var, Mult<Var, Literal>>} or similar. This idea can
+be used to use native expression syntax to build the AST of the expression instead of actually evaluating it.
+A further introduction to expression templates in general, and how to implement them in C++ can be found in
+Bachelet/Yon (2017)\autocite{bachelet}, but the following sections go through this specific
+implementation.
+
+It is worth noting that the library makes heavy usage of certain C++20\autocite{C++Std} features,
+especially the features commonly refered to under the umbrella term
+\emph{concepts}\autocite{cppr:concepts}, which help constrain the template parameters of templated
+entities.
+
+\section{Blocks}
+
 One important design decision in this library, is to split the declaration of a block diagram from the
 evaluation of the corresponding signal processor. While this makes implementing new block types slightly more
 verbose, it has a couple of advantages. Most importantly, a block diagram is a static structure that can be
@@ -15,8 +37,6 @@ declared once, even constructed at compile time in many cases, and then multiple
 processor can be constructed at runtime as needed. Secondly, having the block diagram available as a
 declarative structure makes other evaluators than the signal processor possible, such as one that builds a
 visualization of the block diagram.
-
-\section{Blocks}
 
 \subsubsection{BlockBase}
 
@@ -411,6 +431,7 @@ auto-boxing.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Evaluating Signal Processors}
+\label{sec:eda_eval}
 
 Up until now, this chapter has only described the declarations of block diagrams, and nothing about how to
 evaluate the corresponding signal processors. As mentioned in the beginning of this chapter, the declarations
@@ -653,35 +674,6 @@ This description can be translated directly to an implementation of the function
   }
 \end{cppcodenl}
 
-\subsection{Repeat}
-\todo{Explain or remove}
-\begin{cppcodenl}
-  template<std::size_t N>
-  constexpr auto repeat(AnyBlock auto const& block, auto&& composition) 
-  requires requires { composition(block, block); }
-  {
-    if constexpr (N == 0) {
-      return ident<0>;
-    } else if constexpr (N == 1) {
-      return block;
-    } else {
-      return composition(block, repeat<N - 1>(block, composition));
-    }
-  }
-
-  template<std::size_t N>
-  constexpr auto repeat_seq(AnyBlock auto const& block)
-  {
-    return repeat<N>(block, [](auto&& a, auto&& b) { return seq(a, b); });
-  }
-
-  template<std::size_t N>
-  constexpr auto repeat_par(AnyBlock auto const& block)
-  {
-    return repeat<N>(block, [](auto&& a, auto&& b) { return par(a, b); });
-  }
-\end{cppcodenl}
-
 \section{Compilation Errors}
 \label{sec:eda_errors}
 
@@ -710,12 +702,37 @@ include/eda/block.hpp:178:12: note: because 'outs<eda::Parallel<eda::Ident<1>, e
            ^
 \end{minted}
 
-\todo{Say something about this?}
+Error messages emitted from programs that rely heavily on templates, but are implemented before or without
+explicit constraints have notoriously long and cryptic error messages\footnotemark, so comparatively this
+goes straight to the point.
 
-When declaring blocks, it can be useful to use the \concept{ABlock} concept as a placeholder type:
+\footnotetext{In his CppCon 2019 talk \emph{How to Implement Your First Compiler Feature:The Story of Concepts in Clang}\autocite{Raz2019}, Saar Raz famously talks about how he had to first implement a parser for the gigabyte of compiler error
+  messages produced by one such program.}
+
+To give the compiler as much context as possible for errors, it can be useful to use the
+\concept{ABlock} concept as a placeholder type when declaring blocks:
 
 \begin{cppcodenl}
   ABlock<1, 2> auto d = (_ << (_ + _, _ * _));
 \end{cppcodenl}
 
 Here the \cpp{ABlock<1, 2>} prefix becomes a checked annotation that \cpp{d} is a block with signature $1 \rightarrow 2$.
+
+\section{Conclusion \& Further Work}
+\label{sec:eda_conc}
+
+In this chapter I have shown how an EDSL based on FAUSTs algebra of blocks can be implemented in C++, using
+the basic techniques of expression templates to build an AST that can then be evaluated by a separate class.
+
+The evaluator shown here is the simplest one possible, as it merely walks the AST, evaluating one sample at a
+time. However, other evaluators could be explored that work more efficiently, such as a vectorizing evaluator
+as mentioned in \autoref{sec:eda_eval}. Additionally, the AST represented by block diagram declarations
+could be transformed and optimized, detecting patterns and redundancies that can be reduced to other blocks.
+
+Additionally, visitors for other purposes could be built, for example one that generated a visual
+representation of the block diagram, or more specialized ones that could be used to generate user interfaces
+from block diagrams that contain special control blocks.
+
+However, as presented here, the library can already be used to implement real applications, as will be
+explored in the next chapter.
+

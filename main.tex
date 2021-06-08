@@ -7,25 +7,25 @@
 
 \begin{document}
 
-\iffalse
-  \pagenumbering{roman}
-  \input{Frontmatter/Frontpage.tex}
-  \pagecolor{white}
-  %\newgeometry{top=2.81cm, bottom=2.75cm, outer=2.5cm, inner=3.5cm}
-  \pagestyle{empty}
-  \cleardoublepage
-  \input{Frontmatter/Copyright.tex}
-  \clearpage
-  \pagestyle{main}
-  %\input{Frontmatter/Approval.tex}
-  %\clearpage 
-  \input{Frontmatter/Abstract.tex}
-  \clearpage
-  \input{Frontmatter/Acknowledgements.tex}
-  \cleardoublepage
-  \tableofcontents
-  \cleardoublepage
-\fi
+% \iffalse
+\pagenumbering{roman}
+\input{Frontmatter/Frontpage.tex}
+\pagecolor{white}
+%\newgeometry{top=2.81cm, bottom=2.75cm, outer=2.5cm, inner=3.5cm}
+\pagestyle{empty}
+\cleardoublepage
+\input{Frontmatter/Copyright.tex}
+\clearpage
+\pagestyle{main}
+%\input{Frontmatter/Approval.tex}
+%\clearpage 
+\input{Frontmatter/Abstract.tex}
+\clearpage
+\input{Frontmatter/Acknowledgements.tex}
+\cleardoublepage
+\tableofcontents
+\cleardoublepage
+% \fi
 
 \newcommand{\includechapter}[1]{
   \input{Chapters/#1.tex}
@@ -39,12 +39,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \pagenumbering{arabic}
 
-\includechapter{01_Introduction}
+\includechapter{01_intro}
 \includechapter{02_Review}
 \includechapter{03_block_diagrams}
 \includechapter{04_cpp_lib}
 \includechapter{05_echo}
 \includechapter{06_multirate}
+\includechapter{07_conc}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
